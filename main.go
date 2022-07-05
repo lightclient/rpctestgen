@@ -20,6 +20,8 @@ type Args struct {
 	OutDir     string `arg:"--out" help:"directory where test fixtures will be written" default:"tests"`
 	Ethash     bool   `arg:"--ethash" help:"seal blocks using proof-of-work"`
 	EthashDir  string `arg:"--ethashdir" help:"directory to store ethash dag (empty for in-memory only)"`
+	Clique     bool   `arg:"--clique" help:"seal blocks using clique"`
+	CliqueKey  bool   `arg:"--cliquekey" help:"key to use as sealer" default:"0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"`
 	ChainDir   string `arg:"--chain" help:"path to directory with chain.rlp and genesis.json"`
 	Verbose    bool   `arg:"-v,--verbose" help:"verbosity level of rpctestgen"`
 	LogLevel   string `arg:"--loglevel" help:"log level of client" default:"info"`
@@ -43,6 +45,10 @@ func main() {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ARGS, &args)
+
+	if args.Clique && args.Ethash {
+		exit(fmt.Errorf("multiple sealing methods not allowed"))
+	}
 
 	if err := runGenerator(ctx); err != nil {
 		exit(err)

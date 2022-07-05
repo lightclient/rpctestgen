@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/consensus/clique"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -102,16 +103,20 @@ func initChain(ctx context.Context, args *Args) (*chainData, error) {
 	} else {
 		// Make consensus engine.
 		var engine consensus.Engine
-		config := ethash.Config{
-			PowMode:        ethash.ModeFake,
-			CachesInMem:    2,
-			DatasetsOnDisk: 2,
-			DatasetDir:     args.EthashDir,
-		}
 		if args.Ethash {
-			config.PowMode = ethash.ModeNormal
+			config := ethash.Config{
+				PowMode:        ethash.ModeFake,
+				CachesInMem:    2,
+				DatasetsOnDisk: 2,
+				DatasetDir:     args.EthashDir,
+			}
+			if args.Ethash {
+				config.PowMode = ethash.ModeNormal
+			}
+			engine = ethash.New(config, nil, false)
+		} else if args.Clique {
+			clique.New()
 		}
-		engine = ethash.New(config, nil, false)
 
 		// Generate test chain and write to output directory.
 		chain.gspec, chain.blocks = genSimpleChain(engine)
