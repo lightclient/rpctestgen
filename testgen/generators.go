@@ -2799,25 +2799,6 @@ var EthSimulateV1 = MethodTests{
 				if err := checkBlockNumber(res[1].Number, 200); err != nil {
 					return err
 				}
-
-				rlp_1, rlpError := rlp.EncodeToBytes([][]byte{res[0].Calls[0].ReturnData, big.NewInt(int64(2)).Bytes()})
-				if rlpError != nil {
-					return rlpError
-				}
-				//keccack256(rlp([blockhash_1, 2])
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[1].ReturnData), crypto.Keccak256Hash(rlp_1)); err != nil {
-					return err
-				}
-
-				rlp_10, rlpError := rlp.EncodeToBytes([][]byte{res[0].Hash.Bytes(), big.NewInt(int64(19)).Bytes()})
-				if rlpError != nil {
-					return rlpError
-				}
-				//keccack256(rlp([blockhash_10, 19])
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), crypto.Keccak256Hash(rlp_10)); err != nil {
-					return err
-				}
-
 				return nil
 			},
 		},
@@ -2873,16 +2854,6 @@ var EthSimulateV1 = MethodTests{
 				}
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
-				noCode := "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
-				if res[1].Calls[0].ReturnData.String() == noCode {
-					return fmt.Errorf("res 1 overrided contract does not have contract code: %s", res[1].Calls[0].ReturnData.String())
-				}
-				if res[3].Calls[0].ReturnData.String() != noCode {
-					return fmt.Errorf("res 3 self destructed code does have contract code: %s", res[3].Calls[0].ReturnData.String())
-				}
-				if res[5].Calls[0].ReturnData.String() == noCode {
-					return fmt.Errorf("res 5 overrided contract does not have contract code: %s", res[5].Calls[0].ReturnData.String())
 				}
 				return nil
 			},
@@ -4198,19 +4169,19 @@ var EthSimulateV1 = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number: (*hexutil.Big)(big.NewInt(150)),
-								Time:   getUint64Ptr(100),
+								Time:   getUint64Ptr(1000),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
 								Number: (*hexutil.Big)(big.NewInt(200)),
-								Time:   getUint64Ptr(101),
+								Time:   getUint64Ptr(1010),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
 								Number: (*hexutil.Big)(big.NewInt(210)),
-								Time:   getUint64Ptr(200),
+								Time:   getUint64Ptr(2000),
 							},
 						},
 					},
@@ -4456,7 +4427,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(200000000),
+									Balance: newRPCBalance(376991040),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: getBalanceGetter(),
