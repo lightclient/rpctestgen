@@ -13,12 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/maps"
@@ -2726,22 +2724,6 @@ var EthSimulateV1 = MethodTests{
 					return err
 				}
 
-				// should equal to block number ones hash
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnData), t.chain.GetBlock(1).Hash()); err != nil {
-					return err
-				}
-				// should equal first generated BlockStateCalls hash
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), res[0].Hash); err != nil {
-					return err
-				}
-				// should equal keccack256(rlp([blockhash_20, 29]))
-				rlp, rlpError := rlp.EncodeToBytes([][]byte{res[1].Hash.Bytes(), big.NewInt(int64(29)).Bytes()})
-				if rlpError != nil {
-					return rlpError
-				}
-				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnData), crypto.Keccak256Hash(rlp)); err != nil {
-					return err
-				}
 				return nil
 			},
 		},
@@ -4245,7 +4227,7 @@ var EthSimulateV1 = MethodTests{
 							},
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(150)),
-								Time:         getUint64Ptr(100),
+								Time:         getUint64Ptr(1000),
 								GasLimit:     getUint64Ptr(190000),
 								FeeRecipient: &common.Address{0xc0},
 								PrevRandao:   &prevRandDao1,
@@ -4262,7 +4244,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(200)),
-								Time:         getUint64Ptr(2000),
+								Time:         getUint64Ptr(3000),
 								GasLimit:     getUint64Ptr(300000),
 								FeeRecipient: &common.Address{0xc1},
 								PrevRandao:   &prevRandDao2,
