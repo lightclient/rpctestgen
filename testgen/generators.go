@@ -3583,9 +3583,11 @@ var EthSimulateV1 = MethodTests{
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
+							BlockOverrides: &BlockOverrides{
+								BaseFee: (*hexutil.Big)(big.NewInt(1)),
+							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
-								BaseFee:              (*hexutil.Big)(big.NewInt(1)),
 							},
 						}, {
 							Calls: []TransactionArgs{
