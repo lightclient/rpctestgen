@@ -1922,7 +1922,7 @@ var EthSimulateV1 = MethodTests{
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
 								To:                  &common.Address{0xc1},
-								MaxFeePerBlobGas:    *newRPCBalance(1000),
+								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
 						},
@@ -1933,7 +1933,7 @@ var EthSimulateV1 = MethodTests{
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
 								To:                  &common.Address{0xc1},
-								MaxFeePerBlobGas:    *newRPCBalance(1000),
+								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
 						},
@@ -3541,7 +3541,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000000)},
 							},
 						}, {
 							Calls: []TransactionArgs{
@@ -3549,19 +3549,19 @@ var EthSimulateV1 = MethodTests{
 									From:         &common.Address{0xc0},
 									To:           &common.Address{0xc0},
 									Nonce:        getUint64Ptr(0),
-									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(2)),
 								},
 								{
 									From:         &common.Address{0xc0},
 									To:           &common.Address{0xc0},
 									Nonce:        getUint64Ptr(1),
-									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(2)),
 								},
 								{
 									From:         &common.Address{0xc0},
 									To:           &common.Address{0xc0},
 									Nonce:        getUint64Ptr(2),
-									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(2)),
 								},
 							},
 						},
