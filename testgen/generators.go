@@ -3541,10 +3541,8 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000000)},
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000000)},
 							},
-						},
-						{
 							BlockOverrides: &BlockOverrides{
 								BaseFee: (*hexutil.Big)(big.NewInt(9)),
 							},
