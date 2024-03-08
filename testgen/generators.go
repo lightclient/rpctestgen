@@ -1896,6 +1896,60 @@ var EthSimulateV1 = MethodTests{
 	"eth_simulateV1",
 	[]Test{
 		{
+			Name:  "ethSimulate-blobs",
+			About: "simulates a simple blob transaction",
+			Run: func(ctx context.Context, t *T) error {
+				var (
+					emptyBlob          = kzg4844.Blob{}
+					emptyBlobCommit, _ = kzg4844.BlobToCommitment(emptyBlob)
+					emptyBlobProof, _  = kzg4844.ComputeBlobProof(emptyBlob, emptyBlobCommit)
+				)
+				sidecar := &types.BlobTxSidecar{
+					Blobs:       []kzg4844.Blob{emptyBlob},
+					Commitments: []kzg4844.Commitment{emptyBlobCommit},
+					Proofs:      []kzg4844.Proof{emptyBlobProof},
+				}
+				blobVersionedhashes := sidecar.BlobHashes()
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								BlobBaseFee: (*hexutil.Big)(big.NewInt(0)),
+							},
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(100000000)},
+							},
+							Calls: []TransactionArgs{{
+								From:                &common.Address{0xc0},
+								To:                  &common.Address{0xc1},
+								MaxFeePerBlobGas:    *newRPCBalance(1000),
+								BlobVersionedHashes: &blobVersionedhashes,
+							}},
+						},
+						{
+							BlockOverrides: &BlockOverrides{
+								BlobBaseFee: (*hexutil.Big)(big.NewInt(1)),
+							},
+							Calls: []TransactionArgs{{
+								From:                &common.Address{0xc0},
+								To:                  &common.Address{0xc1},
+								MaxFeePerBlobGas:    *newRPCBalance(1000),
+								BlobVersionedHashes: &blobVersionedhashes,
+							}},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "ethSimulate-simple",
 			About: "simulates a ethSimulate transfer",
 			Run: func(ctx context.Context, t *T) error {
@@ -3492,19 +3546,22 @@ var EthSimulateV1 = MethodTests{
 						}, {
 							Calls: []TransactionArgs{
 								{
-									From:  &common.Address{0xc0},
-									To:    &common.Address{0xc0},
-									Nonce: getUint64Ptr(0),
+									From:         &common.Address{0xc0},
+									To:           &common.Address{0xc0},
+									Nonce:        getUint64Ptr(0),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 								},
 								{
-									From:  &common.Address{0xc0},
-									To:    &common.Address{0xc0},
-									Nonce: getUint64Ptr(1),
+									From:         &common.Address{0xc0},
+									To:           &common.Address{0xc0},
+									Nonce:        getUint64Ptr(1),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 								},
 								{
-									From:  &common.Address{0xc0},
-									To:    &common.Address{0xc0},
-									Nonce: getUint64Ptr(2),
+									From:         &common.Address{0xc0},
+									To:           &common.Address{0xc0},
+									Nonce:        getUint64Ptr(2),
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 								},
 							},
 						},
@@ -3528,6 +3585,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
+								BaseFee:              (*hexutil.Big)(big.NewInt(1)),
 							},
 						}, {
 							Calls: []TransactionArgs{
@@ -4430,16 +4488,18 @@ var EthSimulateV1 = MethodTests{
 									Nonce:                getUint64Ptr(0),
 								},
 								{
-									From:  &common.Address{0xc0},
-									To:    &common.Address{0xc1},
-									Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
-									Nonce: getUint64Ptr(1),
+									From:         &common.Address{0xc0},
+									To:           &common.Address{0xc1},
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									Input:        hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+									Nonce:        getUint64Ptr(1),
 								},
 								{
-									From:  &common.Address{0xc0},
-									To:    &common.Address{0xc1},
-									Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
-									Nonce: getUint64Ptr(2),
+									From:         &common.Address{0xc0},
+									To:           &common.Address{0xc1},
+									MaxFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									Input:        hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+									Nonce:        getUint64Ptr(2),
 								},
 							},
 						},
@@ -4999,6 +5059,8 @@ type TransactionArgs struct {
 	GasPrice             *hexutil.Big    `json:"gasPrice,omitempty"`
 	MaxFeePerGas         *hexutil.Big    `json:"maxFeePerGas,omitempty"`
 	MaxPriorityFeePerGas *hexutil.Big    `json:"maxPriorityFeePerGas,omitempty"`
+	MaxFeePerBlobGas     *hexutil.Big    `json:"maxFeePerBlobGas,omitempty"`
+	BlobVersionedHashes  *[]common.Hash  `json:"blobVersionedHashes,omitempty"`
 	Value                *hexutil.Big    `json:"value,omitempty"`
 	Nonce                *hexutil.Uint64 `json:"nonce,omitempty"`
 
@@ -5021,6 +5083,7 @@ type BlockOverrides struct {
 	FeeRecipient *common.Address `json:"feeRecipient,omitempty"`
 	PrevRandao   *common.Hash    `json:"prevRandao,omitempty"`
 	BaseFee      *hexutil.Big    `json:"baseFeePerGas,omitempty"`
+	BlobBaseFee  *hexutil.Big    `json:"blobBaseFee,omitempty"`
 }
 
 // OverrideAccount indicates the overriding fields of account during the execution
