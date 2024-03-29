@@ -1918,6 +1918,9 @@ var EthSimulateV1 = MethodTests{
 							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(100000000)},
+								common.Address{0xc2}: OverrideAccount{
+									Code: getFirstThreeBlobs(),
+								},
 							},
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
@@ -3298,7 +3301,7 @@ var EthSimulateV1 = MethodTests{
 							BaseFee: (*hexutil.Big)(big.NewInt(10)),
 						},
 						Calls: []TransactionArgs{{
-							From:                 &common.Address{0xc1},
+							From:                 &common.Address{0xc0},
 							To:                   &common.Address{0xc1},
 							MaxFeePerGas:         (*hexutil.Big)(big.NewInt(0)),
 							MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
