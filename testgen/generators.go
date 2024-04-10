@@ -1918,13 +1918,11 @@ var EthSimulateV1 = MethodTests{
 							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(100000000)},
-								common.Address{0xc2}: OverrideAccount{
-									Code: getFirstThreeBlobs(),
-								},
+								common.Address{0xc2}: OverrideAccount{Code: getFirstThreeBlobs()},
 							},
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
-								To:                  &common.Address{0xc1},
+								To:                  &common.Address{0xc2},
 								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
@@ -1935,7 +1933,7 @@ var EthSimulateV1 = MethodTests{
 							},
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
-								To:                  &common.Address{0xc1},
+								To:                  &common.Address{0xc2},
 								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
@@ -3290,7 +3288,7 @@ var EthSimulateV1 = MethodTests{
 		},
 		{
 			Name:  "ethSimulate-basefee-too-low-with-validation-38012",
-			About: "Error: BaseFee too low with validation (-38012)",
+			About: "Error: BaseFeePerGas too low with validation (-38012)",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
@@ -3298,7 +3296,7 @@ var EthSimulateV1 = MethodTests{
 							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
 						},
 						BlockOverrides: &BlockOverrides{
-							BaseFee: (*hexutil.Big)(big.NewInt(10)),
+							BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 						},
 						Calls: []TransactionArgs{{
 							From:                 &common.Address{0xc0},
@@ -3316,7 +3314,7 @@ var EthSimulateV1 = MethodTests{
 		},
 		{
 			Name:  "ethSimulate-basefee-too-low-without-validation-38012",
-			About: "Error: BaseFee too low with no validation (-38012)",
+			About: "Error: BaseFeePerGas too low with no validation (-38012)",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
@@ -3324,7 +3322,7 @@ var EthSimulateV1 = MethodTests{
 							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
 						},
 						BlockOverrides: &BlockOverrides{
-							BaseFee: (*hexutil.Big)(big.NewInt(10)),
+							BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 						},
 						Calls: []TransactionArgs{{
 							From:                 &common.Address{0xc1},
@@ -3547,7 +3545,7 @@ var EthSimulateV1 = MethodTests{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000000)},
 							},
 							BlockOverrides: &BlockOverrides{
-								BaseFee: (*hexutil.Big)(big.NewInt(9)),
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(9)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -3586,7 +3584,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								BaseFee: (*hexutil.Big)(big.NewInt(1)),
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1)),
 							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
@@ -3627,12 +3625,12 @@ var EthSimulateV1 = MethodTests{
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
-							Number:       (*hexutil.Big)(big.NewInt(1001)),
-							Time:         getUint64Ptr(1003),
-							GasLimit:     getUint64Ptr(1004),
-							FeeRecipient: &feeRecipient,
-							PrevRandao:   &randDao,
-							BaseFee:      (*hexutil.Big)(big.NewInt(1007)),
+							Number:        (*hexutil.Big)(big.NewInt(1001)),
+							Time:          getUint64Ptr(1003),
+							GasLimit:      getUint64Ptr(1004),
+							FeeRecipient:  &feeRecipient,
+							PrevRandao:    &randDao,
+							BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
 						},
 					}},
 				}
@@ -4288,12 +4286,12 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(150)),
-								Time:         getUint64Ptr(1000),
-								GasLimit:     getUint64Ptr(190000),
-								FeeRecipient: &common.Address{0xc0},
-								PrevRandao:   &prevRandDao1,
-								BaseFee:      (*hexutil.Big)(big.NewInt(10)),
+								Number:        (*hexutil.Big)(big.NewInt(150)),
+								Time:          getUint64Ptr(1000),
+								GasLimit:      getUint64Ptr(190000),
+								FeeRecipient:  &common.Address{0xc0},
+								PrevRandao:    &prevRandDao1,
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4305,12 +4303,12 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(200)),
-								Time:         getUint64Ptr(3000),
-								GasLimit:     getUint64Ptr(300000),
-								FeeRecipient: &common.Address{0xc1},
-								PrevRandao:   &prevRandDao2,
-								BaseFee:      (*hexutil.Big)(big.NewInt(20)),
+								Number:        (*hexutil.Big)(big.NewInt(200)),
+								Time:          getUint64Ptr(3000),
+								GasLimit:      getUint64Ptr(300000),
+								FeeRecipient:  &common.Address{0xc1},
+								PrevRandao:    &prevRandDao2,
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(20)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4322,12 +4320,12 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(201)),
-								Time:         getUint64Ptr(30000),
-								GasLimit:     getUint64Ptr(190002),
-								FeeRecipient: &common.Address{0xc2},
-								PrevRandao:   &prevRandDao3,
-								BaseFee:      (*hexutil.Big)(big.NewInt(30)),
+								Number:        (*hexutil.Big)(big.NewInt(201)),
+								Time:          getUint64Ptr(30000),
+								GasLimit:      getUint64Ptr(190002),
+								FeeRecipient:  &common.Address{0xc2},
+								PrevRandao:    &prevRandDao3,
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(30)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4478,9 +4476,9 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(150)),
-								FeeRecipient: &common.Address{0xc2},
-								BaseFee:      (*hexutil.Big)(big.NewInt(10)),
+								Number:        (*hexutil.Big)(big.NewInt(150)),
+								FeeRecipient:  &common.Address{0xc2},
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -5081,13 +5079,13 @@ type TransactionArgs struct {
 
 // BlockOverrides is a set of header fields to override.
 type BlockOverrides struct {
-	Number       *hexutil.Big    `json:"number,omitempty"`
-	Time         *hexutil.Uint64 `json:"time,omitempty"`
-	GasLimit     *hexutil.Uint64 `json:"gasLimit,omitempty"`
-	FeeRecipient *common.Address `json:"feeRecipient,omitempty"`
-	PrevRandao   *common.Hash    `json:"prevRandao,omitempty"`
-	BaseFee      *hexutil.Big    `json:"baseFeePerGas,omitempty"`
-	BlobBaseFee  *hexutil.Big    `json:"blobBaseFee,omitempty"`
+	Number        *hexutil.Big    `json:"number,omitempty"`
+	Time          *hexutil.Uint64 `json:"time,omitempty"`
+	GasLimit      *hexutil.Uint64 `json:"gasLimit,omitempty"`
+	FeeRecipient  *common.Address `json:"feeRecipient,omitempty"`
+	PrevRandao    *common.Hash    `json:"prevRandao,omitempty"`
+	BaseFeePerGas *hexutil.Big    `json:"baseFeePerGas,omitempty"`
+	BlobBaseFee   *hexutil.Big    `json:"blobBaseFee,omitempty"`
 }
 
 // OverrideAccount indicates the overriding fields of account during the execution
