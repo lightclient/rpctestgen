@@ -4019,7 +4019,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(101),
 									Nonce:                getUint64Ptr(6),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc0},
@@ -4031,7 +4030,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(102),
 									Nonce:                getUint64Ptr(7),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc0},
@@ -4043,7 +4041,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(103),
 									Nonce:                getUint64Ptr(8),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc0},
@@ -4055,7 +4052,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(104),
 									Nonce:                getUint64Ptr(9),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc0},
@@ -4067,7 +4063,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(105),
 									Nonce:                getUint64Ptr(10),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc0},
@@ -4079,7 +4074,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(106),
 									Nonce:                getUint64Ptr(11),
-									ChainID:              *newRPCBalance(1),
 								},
 								{
 									From:                 &common.Address{0xc1},
@@ -4091,7 +4085,6 @@ var EthSimulateV1 = MethodTests{
 									MaxFeePerBlobGas:     *newRPCBalance(0),
 									Value:                *newRPCBalance(106),
 									Nonce:                getUint64Ptr(1),
-									ChainID:              *newRPCBalance(1),
 								},
 							},
 						}},
