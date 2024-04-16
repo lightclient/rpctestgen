@@ -3924,9 +3924,8 @@ var EthSimulateV1 = MethodTests{
 							BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 						},
 						StateOverrides: &StateOverride{
-							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001)},
-							common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(900002)},
-							common.Address{0xc2}: OverrideAccount{Balance: newRPCBalance(900003)},
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001000)},
+							common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(900002000)},
 						},
 						Calls: []TransactionArgs{
 							{
