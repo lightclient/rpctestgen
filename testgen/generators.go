@@ -3939,7 +3939,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(101),
 								Nonce:                getUint64Ptr(0),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc0},
@@ -3951,7 +3950,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(102),
 								Nonce:                getUint64Ptr(1),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc0},
@@ -3963,7 +3961,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(103),
 								Nonce:                getUint64Ptr(2),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc0},
@@ -3975,7 +3972,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(104),
 								Nonce:                getUint64Ptr(3),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc0},
@@ -3987,7 +3983,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(105),
 								Nonce:                getUint64Ptr(4),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc0},
@@ -3999,7 +3994,6 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(106),
 								Nonce:                getUint64Ptr(5),
-								ChainID:              *newRPCBalance(1),
 							},
 							{
 								From:                 &common.Address{0xc1},
@@ -4011,19 +4005,10 @@ var EthSimulateV1 = MethodTests{
 								MaxFeePerBlobGas:     *newRPCBalance(0),
 								Value:                *newRPCBalance(106),
 								Nonce:                getUint64Ptr(0),
-								ChainID:              *newRPCBalance(1),
 							},
 						},
 					},
 						{
-							BlockOverrides: &BlockOverrides{
-								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
-							},
-							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(200001)},
-								common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(200002)},
-								common.Address{0xc2}: OverrideAccount{Balance: newRPCBalance(200003)},
-							},
 							Calls: []TransactionArgs{
 								{
 									From:                 &common.Address{0xc0},
