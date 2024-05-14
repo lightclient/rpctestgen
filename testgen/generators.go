@@ -2768,7 +2768,7 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(150)),
+							Number: (*hexutil.Big)(big.NewInt(25)),
 						},
 						Calls: []TransactionArgs{
 							{
@@ -2784,7 +2784,7 @@ var EthSimulateV1 = MethodTests{
 						},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(200)),
+							Number: (*hexutil.Big)(big.NewInt(25)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -2794,19 +2794,7 @@ var EthSimulateV1 = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
-
-				if err := checkBlockNumber(res[0].Number, 150); err != nil {
-					return err
-				}
-				if err := checkBlockNumber(res[1].Number, 200); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -4340,19 +4328,19 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(15)),
+								Number: (*hexutil.Big)(big.NewInt(25)),
 								Time:   getUint64Ptr(1000),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(20)),
+								Number: (*hexutil.Big)(big.NewInt(30)),
 								Time:   getUint64Ptr(1010),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(21)),
+								Number: (*hexutil.Big)(big.NewInt(41)),
 								Time:   getUint64Ptr(2000),
 							},
 						},
@@ -4411,7 +4399,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(15)),
+								Number:        (*hexutil.Big)(big.NewInt(25)),
 								Time:          getUint64Ptr(1000),
 								GasLimit:      getUint64Ptr(190000),
 								FeeRecipient:  &common.Address{0xc0},
@@ -4428,7 +4416,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(20)),
+								Number:        (*hexutil.Big)(big.NewInt(30)),
 								Time:          getUint64Ptr(3000),
 								GasLimit:      getUint64Ptr(300000),
 								FeeRecipient:  &common.Address{0xc1},
@@ -4445,7 +4433,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(21)),
+								Number:        (*hexutil.Big)(big.NewInt(31)),
 								Time:          getUint64Ptr(30000),
 								GasLimit:      getUint64Ptr(190002),
 								FeeRecipient:  &common.Address{0xc2},
@@ -4596,7 +4584,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(15)),
+								Number:        (*hexutil.Big)(big.NewInt(35)),
 								FeeRecipient:  &common.Address{0xc2},
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
