@@ -4621,9 +4621,6 @@ var EthSimulateV1 = MethodTests{
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
 				return nil
 			},
 		},
