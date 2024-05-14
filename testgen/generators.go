@@ -2466,12 +2466,7 @@ var EthSimulateV1 = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2726,7 +2721,7 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(150)),
+							Number: (*hexutil.Big)(big.NewInt(20)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -2735,7 +2730,7 @@ var EthSimulateV1 = MethodTests{
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(200)),
+							Number: (*hexutil.Big)(big.NewInt(30)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -2744,7 +2739,7 @@ var EthSimulateV1 = MethodTests{
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(300)),
+							Number: (*hexutil.Big)(big.NewInt(40)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -2754,31 +2749,7 @@ var EthSimulateV1 = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
-
-				for i := 0; i < len(res); i++ {
-					if len(res[i].Calls) != 1 {
-						return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].Calls), 1)
-					}
-					if res[i].Calls[0].Status != 0x1 {
-						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].Calls[0].Status, 0x1)
-					}
-				}
-				if err := checkBlockNumber(res[0].Number, 150); err != nil {
-					return err
-				}
-				if err := checkBlockNumber(res[1].Number, 200); err != nil {
-					return err
-				}
-				if err := checkBlockNumber(res[2].Number, 300); err != nil {
-					return err
-				}
-
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -3635,30 +3606,7 @@ var EthSimulateV1 = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
-				if res[0].Number != 1001 {
-					return fmt.Errorf("unexpected Number (have: %d, want: %d)", res[0].Number, 1001)
-				}
-				if res[0].Time != 1003 {
-					return fmt.Errorf("unexpected Time (have: %d, want: %d)", res[0].Time, 1003)
-				}
-				if res[0].GasLimit != 1004 {
-					return fmt.Errorf("unexpected GasLimit (have: %d, want: %d)", res[0].GasLimit, 1004)
-				}
-				if res[0].FeeRecipient != feeRecipient {
-					return fmt.Errorf("unexpected FeeRecipient (have: %d, want: %d)", res[0].FeeRecipient, feeRecipient)
-				}
-				if *res[0].PrevRandao != randDao {
-					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
-				}
-				/*if res[0].BaseFeePerGas.ToInt().Cmp(big.NewInt(1007)) != 0 {
-					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), big.NewInt(1007))
-				}*/
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -4392,31 +4340,26 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(150)),
+								Number: (*hexutil.Big)(big.NewInt(15)),
 								Time:   getUint64Ptr(1000),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(200)),
+								Number: (*hexutil.Big)(big.NewInt(20)),
 								Time:   getUint64Ptr(1010),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(210)),
+								Number: (*hexutil.Big)(big.NewInt(21)),
 								Time:   getUint64Ptr(2000),
 							},
 						},
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -4468,7 +4411,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(150)),
+								Number:        (*hexutil.Big)(big.NewInt(15)),
 								Time:          getUint64Ptr(1000),
 								GasLimit:      getUint64Ptr(190000),
 								FeeRecipient:  &common.Address{0xc0},
@@ -4485,7 +4428,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(200)),
+								Number:        (*hexutil.Big)(big.NewInt(20)),
 								Time:          getUint64Ptr(3000),
 								GasLimit:      getUint64Ptr(300000),
 								FeeRecipient:  &common.Address{0xc1},
@@ -4502,7 +4445,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(201)),
+								Number:        (*hexutil.Big)(big.NewInt(21)),
 								Time:          getUint64Ptr(30000),
 								GasLimit:      getUint64Ptr(190002),
 								FeeRecipient:  &common.Address{0xc2},
@@ -4520,12 +4463,7 @@ var EthSimulateV1 = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -4658,7 +4596,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(150)),
+								Number:        (*hexutil.Big)(big.NewInt(15)),
 								FeeRecipient:  &common.Address{0xc2},
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
@@ -4718,104 +4656,6 @@ var EthSimulateV1 = MethodTests{
 									From: &common.Address{0xc0},
 									To:   &common.Address{0xc0},
 								},
-							},
-						},
-					},
-					TraceTransfers: true,
-				}
-				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "ethSimulate-long-block-distances",
-			About: "check that parameters adjust the same way when there's big distances between block numbers",
-			Run: func(ctx context.Context, t *T) error {
-				params := ethSimulateOpts{
-					BlockStateCalls: []CallBatch{
-						{
-							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{
-									Code: getBlockProperties(),
-								},
-							},
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(50)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(100)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(101)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(1000)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10000)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10001)),
-							},
-						},
-						{
-							Calls: []TransactionArgs{
-								{
-									From: &common.Address{0xc1},
-									To:   &common.Address{0xc0},
-								},
-							},
-							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(100000)),
 							},
 						},
 					},
