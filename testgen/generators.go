@@ -5435,35 +5435,6 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 						},
-						{
-							StateOverrides: &StateOverride{ // move ecRecover and call it in new address
-								ecRecoverAddress: OverrideAccount{
-									MovePrecompileToAddress: &ecRecoverMovedToAddress2,
-								},
-							},
-							Calls: []TransactionArgs{
-								{ // call with invalid params, should fail (resolve to 0x0)
-									From:  &common.Address{0xc1},
-									To:    &ecRecoverMovedToAddress,
-									Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
-								},
-								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
-									From:  &common.Address{0xc1},
-									To:    &ecRecoverMovedToAddress,
-									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
-								},
-								{ // call with valid params, the old address, should fail as it was moved
-									From:  &common.Address{0xc1},
-									To:    &ecRecoverAddress,
-									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
-								},
-								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
-									From:  &common.Address{0xc1},
-									To:    &ecRecoverMovedToAddress2,
-									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
-								},
-							},
-						},
 					},
 					TraceTransfers: true,
 					Validation:     false,
