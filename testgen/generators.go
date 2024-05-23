@@ -5070,7 +5070,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(1001)),
+								Number:        (*hexutil.Big)(big.NewInt(31)),
 								Time:          getUint64Ptr(1003),
 								GasLimit:      getUint64Ptr(1004),
 								FeeRecipient:  &common.Address{0xc2},
@@ -5329,7 +5329,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(25)),
+								Number: (*hexutil.Big)(big.NewInt(45)),
 							},
 							Calls: []TransactionArgs{
 								{
