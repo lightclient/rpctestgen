@@ -5072,7 +5072,6 @@ var EthSimulateV1 = MethodTests{
 							BlockOverrides: &BlockOverrides{
 								Number:        (*hexutil.Big)(big.NewInt(31)),
 								Time:          getUint64Ptr(1003),
-								GasLimit:      getUint64Ptr(1004),
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao,
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
