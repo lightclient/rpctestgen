@@ -2721,7 +2721,7 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(20)),
+							Number: (*hexutil.Big)(big.NewInt(21)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -3501,7 +3501,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000000)},
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000000000)},
 							},
 							BlockOverrides: &BlockOverrides{
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(9)),
@@ -5052,6 +5052,426 @@ var EthSimulateV1 = MethodTests{
 				}
 				if len(res[0].Calls) != len(params.BlockStateCalls[0].Calls) {
 					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.BlockStateCalls[0].Calls))
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "ethSimulate-use-as-many-features-as-possible",
+			About: "try using all eth simulates features at once",
+			Run: func(ctx context.Context, t *T) error {
+				prevRandDao := common.BytesToHash(*hex2Bytes("12345"))
+				stateChanges := make(map[common.Hash]common.Hash)
+				stateChanges[common.BytesToHash(*hex2Bytes("0000000000000000000000000000000000000000000000000000000000000000"))] = common.Hash{0x12} //slot 0 -> 0x12
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				ecRecoverMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				ecRecoverMovedToAddress2 := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123457"))
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Number:        (*hexutil.Big)(big.NewInt(1001)),
+								Time:          getUint64Ptr(1003),
+								GasLimit:      getUint64Ptr(1004),
+								FeeRecipient:  &common.Address{0xc2},
+								PrevRandao:    &prevRandDao,
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
+							},
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001000)},
+								common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(900002000)},
+								common.Address{0xc1}: OverrideAccount{
+									Code:    extCodeHashContract(),
+									Balance: newRPCBalance(900002000),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(101),
+									Nonce:                getUint64Ptr(0),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(102),
+									Nonce:                getUint64Ptr(1),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(103),
+									Nonce:                getUint64Ptr(2),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(104),
+									Nonce:                getUint64Ptr(3),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(105),
+									Nonce:                getUint64Ptr(4),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(106),
+									Nonce:                getUint64Ptr(5),
+								},
+								{
+									From:                 &common.Address{0xc1},
+									To:                   &common.Address{0xc2},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(106),
+									Nonce:                getUint64Ptr(0),
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(101),
+									Nonce:                getUint64Ptr(6),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(102),
+									Nonce:                getUint64Ptr(7),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(103),
+									Nonce:                getUint64Ptr(8),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(104),
+									Nonce:                getUint64Ptr(9),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(105),
+									Nonce:                getUint64Ptr(10),
+								},
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(106),
+									Nonce:                getUint64Ptr(11),
+								},
+								{
+									From:                 &common.Address{0xc1},
+									To:                   &common.Address{0xc2},
+									Input:                hex2Bytes(""),
+									Gas:                  getUint64Ptr(21000),
+									MaxFeePerGas:         *newRPCBalance(20),
+									MaxPriorityFeePerGas: *newRPCBalance(1),
+									MaxFeePerBlobGas:     *newRPCBalance(0),
+									Value:                *newRPCBalance(106),
+									Nonce:                getUint64Ptr(1),
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: delegateCaller(),
+								},
+								common.Address{0xc2}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Input: hex2Bytes("5c19a95c000000000000000000000000c200000000000000000000000000000000000000"),
+								Value: *newRPCBalance(1000),
+							}},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: getStorageTester(),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("7b8d56e300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"), // set storage slot 0 -> 1
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("7b8d56e300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002"), // set storage slot 1 -> 2
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc2}: OverrideAccount{
+									Code:    selfDestructor(),
+									Balance: newRPCBalance(2000000),
+								},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("83197ef0"), //destroy()
+							}},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: delegateCaller(),
+								},
+								common.Address{0xc2}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Input: hex2Bytes("5c19a95c000000000000000000000000c200000000000000000000000000000000000000"),
+								Value: *newRPCBalance(1000),
+							}},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc2}: OverrideAccount{
+									Code: blockHashCallerByteCode(),
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(25)),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000002"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000004"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000008"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000016"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000032"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000064"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000128"),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000256"),
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: delegateCaller(),
+								},
+								common.Address{0xc2}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Input: hex2Bytes("5c19a95c000000000000000000000000c200000000000000000000000000000000000000"),
+								Value: *newRPCBalance(1000),
+							}},
+						},
+						{
+							Calls: []TransactionArgs{ // just call ecrecover normally
+								{ // call with invalid params, should fail (resolve to 0x0)
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverAddress,
+									Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+								},
+								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverAddress,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+								ecRecoverAddress: OverrideAccount{
+									MovePrecompileToAddress: &ecRecoverMovedToAddress,
+								},
+							},
+							Calls: []TransactionArgs{
+								{ // call with invalid params, should fail (resolve to 0x0)
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverMovedToAddress,
+									Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+								},
+								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverMovedToAddress,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+								{ // call with valid params, the old address, should fail as it was moved
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverAddress,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+								ecRecoverAddress: OverrideAccount{
+									MovePrecompileToAddress: &ecRecoverMovedToAddress2,
+								},
+							},
+							Calls: []TransactionArgs{
+								{ // call with invalid params, should fail (resolve to 0x0)
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverMovedToAddress,
+									Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+								},
+								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverMovedToAddress,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+								{ // call with valid params, the old address, should fail as it was moved
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverAddress,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+								{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+									From:  &common.Address{0xc1},
+									To:    &ecRecoverMovedToAddress2,
+									Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								},
+							},
+						},
+					},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
 				}
 				return nil
 			},

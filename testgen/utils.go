@@ -38,13 +38,6 @@ func checkBlockRLP(t *T, n uint64, got []byte) error {
 	return nil
 }
 
-func checkBlockNumber(value hexutil.Uint64, expected hexutil.Uint64) error {
-	if value != expected {
-		return fmt.Errorf("unexpected block number value(have: %d, want: %d)", value, expected)
-	}
-	return nil
-}
-
 func checkBlockHash(value common.Hash, expected common.Hash) error {
 	if value != expected {
 		return fmt.Errorf("unexpected block hash value(have: %s, want: %s)", value.Hex(), expected.Hex())
