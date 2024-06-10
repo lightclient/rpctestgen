@@ -5076,11 +5076,10 @@ var EthSimulateV1 = MethodTests{
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
 							},
 							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001000)},
-								common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(900002000)},
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001000000)},
 								common.Address{0xc1}: OverrideAccount{
 									Code:    extCodeHashContract(),
-									Balance: newRPCBalance(900002000),
+									Balance: newRPCBalance(900002000000),
 								},
 							},
 							Calls: []TransactionArgs{
@@ -5247,7 +5246,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(900002000),
+									Balance: newRPCBalance(900001000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: delegateCaller(),
@@ -5267,7 +5266,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(900002000),
+									Balance: newRPCBalance(900001000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: getStorageTester(),
@@ -5293,7 +5292,7 @@ var EthSimulateV1 = MethodTests{
 							StateOverrides: &StateOverride{
 								common.Address{0xc2}: OverrideAccount{
 									Code:    selfDestructor(),
-									Balance: newRPCBalance(2000000),
+									Balance: newRPCBalance(900001000000),
 								},
 							},
 							Calls: []TransactionArgs{{
@@ -5305,7 +5304,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(2000000),
+									Balance: newRPCBalance(900001000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: delegateCaller(),
@@ -5324,7 +5323,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(2000000),
+									Balance: newRPCBalance(900001000000),
 								},
 								common.Address{0xc2}: OverrideAccount{
 									Code: blockHashCallerByteCode(),
@@ -5384,7 +5383,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(2000000),
+									Balance: newRPCBalance(900001000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: delegateCaller(),
