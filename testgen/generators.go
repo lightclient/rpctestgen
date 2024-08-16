@@ -1914,7 +1914,8 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								BlobBaseFee: (*hexutil.Big)(big.NewInt(0)),
+								BlobBaseFee:   (*hexutil.Big)(big.NewInt(0)),
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(15)),
 							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(100000000)},
@@ -1923,6 +1924,7 @@ var EthSimulateV1 = MethodTests{
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
 								To:                  &common.Address{0xc2},
+								MaxFeePerGas:        (*hexutil.Big)(big.NewInt(16)),
 								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
@@ -1934,6 +1936,7 @@ var EthSimulateV1 = MethodTests{
 							Calls: []TransactionArgs{{
 								From:                &common.Address{0xc0},
 								To:                  &common.Address{0xc2},
+								MaxFeePerGas:        (*hexutil.Big)(big.NewInt(16)),
 								MaxFeePerBlobGas:    *newRPCBalance(10),
 								BlobVersionedHashes: &blobVersionedhashes,
 							}},
@@ -1995,16 +1998,18 @@ var EthSimulateV1 = MethodTests{
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(15)),
 							},
 							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(1000000000)},
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(10000000000)},
 							},
 							Calls: []TransactionArgs{{
-								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc1},
-								Value: *newRPCBalance(1000),
+								From:         &common.Address{0xc0},
+								To:           &common.Address{0xc1},
+								MaxFeePerGas: (*hexutil.Big)(big.NewInt(16)),
+								Value:        *newRPCBalance(1000000),
 							}, {
-								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Value: *newRPCBalance(1000),
+								From:         &common.Address{0xc1},
+								To:           &common.Address{0xc2},
+								MaxFeePerGas: (*hexutil.Big)(big.NewInt(16)),
+								Value:        *newRPCBalance(1000),
 							}},
 						},
 					},
