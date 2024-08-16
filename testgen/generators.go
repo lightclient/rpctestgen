@@ -1939,6 +1939,8 @@ var EthSimulateV1 = MethodTests{
 							}},
 						},
 					},
+					Validation:             true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -1983,6 +1985,43 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
+			Name:  "ethSimulate-simple-validation-fulltx",
+			About: "simulates a ethSimulate transfer",
+			Run: func(ctx context.Context, t *T) error {
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								BaseFeePerGas: (*hexutil.Big)(big.NewInt(15)),
+							},
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(1000000000)},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: *newRPCBalance(1000),
+							}, {
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Value: *newRPCBalance(1000),
+							}},
+						},
+					},
+					Validation:             true,
+					ReturnFullTransactions: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "ethSimulate-simple-more-params-validate",
 			About: "simulates a simple do-nothing transaction with more fields set",
 			Run: func(ctx context.Context, t *T) error {
@@ -2008,7 +2047,8 @@ var EthSimulateV1 = MethodTests{
 							}},
 						},
 					},
-					Validation: true,
+					Validation:             true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -2233,7 +2273,8 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 					}},
-					Validation: false,
+					Validation:             false,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
@@ -2420,8 +2461,9 @@ var EthSimulateV1 = MethodTests{
 							Value: *newRPCBalance(1000),
 						}},
 					}},
-					TraceTransfers: true,
-					Validation:     true,
+					TraceTransfers:         true,
+					Validation:             true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
@@ -3130,7 +3172,8 @@ var EthSimulateV1 = MethodTests{
 							Value: *newRPCBalance(1000),
 						}},
 					}},
-					TraceTransfers: true,
+					TraceTransfers:         true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -4238,7 +4281,8 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 					},
-					TraceTransfers: true,
+					TraceTransfers:         true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -4326,7 +4370,8 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 					},
-					TraceTransfers: true,
+					TraceTransfers:         true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -4652,8 +4697,9 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 					},
-					Validation:     true,
-					TraceTransfers: true,
+					Validation:             true,
+					TraceTransfers:         true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -4989,7 +5035,8 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{{
 						Calls: []TransactionArgs{{}},
 					}},
-					TraceTransfers: true,
+					TraceTransfers:         true,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
@@ -5476,8 +5523,9 @@ var EthSimulateV1 = MethodTests{
 							},
 						},
 					},
-					TraceTransfers: true,
-					Validation:     false,
+					TraceTransfers:         true,
+					Validation:             false,
+					ReturnFullTransactions: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
@@ -5545,9 +5593,10 @@ type StateOverride map[common.Address]OverrideAccount
 
 // ethSimulateOpts is the wrapper for ethSimulate parameters.
 type ethSimulateOpts struct {
-	BlockStateCalls []CallBatch `json:"blockStateCalls,omitempty"`
-	TraceTransfers  bool        `json:"traceTransfers,omitempty"`
-	Validation      bool        `json:"validation,omitempty"`
+	BlockStateCalls        []CallBatch `json:"blockStateCalls,omitempty"`
+	TraceTransfers         bool        `json:"traceTransfers,omitempty"`
+	Validation             bool        `json:"validation,omitempty"`
+	ReturnFullTransactions bool        `json:"returnFullTransactions,omitempty"`
 }
 
 // CallBatch is a batch of calls to be simulated sequentially.
