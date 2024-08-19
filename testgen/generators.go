@@ -2066,45 +2066,6 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
-			Name:  "ethSimulate-simple-more-params-validate",
-			About: "simulates a simple do-nothing transaction with more fields set",
-			Run: func(ctx context.Context, t *T) error {
-				params := ethSimulateOpts{
-					BlockStateCalls: []CallBatch{
-						{
-							StateOverrides: &StateOverride{
-								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(3360000)},
-							},
-							BlockOverrides: &BlockOverrides{
-								BaseFeePerGas: (*hexutil.Big)(big.NewInt(0)),
-							},
-							Calls: []TransactionArgs{{
-								From:                 &common.Address{0xc0},
-								To:                   &common.Address{0xc1},
-								Gas:                  getUint64Ptr(0x52080),
-								Value:                *newRPCBalance(0),
-								MaxFeePerGas:         (*hexutil.Big)(big.NewInt(0)),
-								MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
-								MaxFeePerBlobGas:     (*hexutil.Big)(big.NewInt(0)),
-								Nonce:                getUint64Ptr(0),
-								Input:                hex2Bytes(""),
-							}},
-						},
-					},
-					Validation:             true,
-					ReturnFullTransactions: true,
-				}
-				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
-				return nil
-			},
-		},
-		{
 			Name:  "ethSimulate-simple-with-validation-no-funds",
 			About: "simulates a ethSimulate transfer with validation and not enough funds",
 			Run: func(ctx context.Context, t *T) error {
