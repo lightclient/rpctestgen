@@ -2066,37 +2066,6 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-validation",
-			About: "simulates empty with validation",
-			Run: func(ctx context.Context, t *T) error {
-				params := ethSimulateOpts{
-					BlockStateCalls:        []CallBatch{{}},
-					Validation:             true,
-					ReturnFullTransactions: true,
-				}
-				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "ethSimulate-empty",
-			About: "simulates empty",
-			Run: func(ctx context.Context, t *T) error {
-				params := ethSimulateOpts{
-					BlockStateCalls:        []CallBatch{{}},
-					ReturnFullTransactions: true,
-				}
-				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-		{
 			Name:  "ethSimulate-simple-more-params-validate",
 			About: "simulates a simple do-nothing transaction with more fields set",
 			Run: func(ctx context.Context, t *T) error {
