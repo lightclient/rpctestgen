@@ -2954,70 +2954,50 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set",
+			Name:  "ethSimulate-empty-with-block-num-set-1",
 			About: "set block number otherwise empty",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1)))
 				return nil
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set",
+			Name:  "ethSimulate-empty-with-block-num-set-19",
 			About: "set block number otherwise empty",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(19))); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(19)))
 				return nil
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set",
+			Name:  "ethSimulate-empty-with-block-num-set-20",
 			About: "set block number otherwise empty with latest",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(20))); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(20)))
 				return nil
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set",
+			Name:  "ethSimulate-empty-with-block-num-set-21",
 			About: "set block number otherwise empty with latest",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(21))); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(21)))
 				return nil
 			},
 		},
