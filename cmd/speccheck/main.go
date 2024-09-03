@@ -11,7 +11,7 @@ import (
 type Args struct {
 	SpecPath   string `arg:"--spec" help:"path to client binary" default:"openrpc.json"`
 	TestsRoot  string `arg:"--tests" help:"path to tests directory" default:"tests"`
-	TestsRegex string `arg:"--regexp" help:"regular expression to match tests to check" deafult:".*"`
+	TestsRegex string `arg:"--regexp" help:"regular expression to match tests to check" default:".*"`
 	Verbose    bool   `arg:"-v,--verbose" help:"verbosity level of rpctestgen"`
 }
 
