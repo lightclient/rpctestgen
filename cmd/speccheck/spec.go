@@ -14,7 +14,7 @@ type ContentDescriptor struct {
 	schema   openrpc.JSONSchemaObject
 }
 
-// methodSchema stores all the schemas neccessary to validate a request or
+// methodSchema stores all the schemas necessary to validate a request or
 // response corresponding to the method.
 type methodSchema struct {
 	name   string

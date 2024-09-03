@@ -1687,7 +1687,7 @@ var EthGetLogs = MethodTests{
 		},
 		{
 			Name:  "topic-exact-match",
-			About: "queries for logs with two topics, with both topics set explictly",
+			About: "queries for logs with two topics, with both topics set explicitly",
 			Run: func(ctx context.Context, t *T) error {
 				// Find a topic.
 				i := slices.IndexFunc(t.chain.txinfo.LegacyEmit, func(tx TxInfo) bool {
@@ -1871,7 +1871,7 @@ var DebugGetRawTransaction = MethodTests{
 					return err
 				}
 				if !bytes.Equal(got, want) {
-					return fmt.Errorf("mismatching raw tx (got: %s, want: %s)", hexutil.Bytes(got), hexutil.Bytes(want))
+					return fmt.Errorf("mismatching raw tx (got: %s, want: %s)", got, hexutil.Bytes(want))
 				}
 				return nil
 			},
