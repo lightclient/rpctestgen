@@ -1073,6 +1073,23 @@ var EthGetTransactionByHash = MethodTests{
 				return nil
 			},
 		},
+		{
+			Name:  "get-authlist-tx",
+			About: "gets a authorization list transaction",
+			Run: func(ctx context.Context, t *T) error {
+				tx := t.chain.FindTransaction("authlist tx", func(i int, tx *types.Transaction) bool {
+					return tx.Type() == types.SetCodeTxType
+				})
+				got, _, err := t.eth.TransactionByHash(ctx, tx.Hash())
+				if err != nil {
+					return err
+				}
+				if got.Hash() != tx.Hash() {
+					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), tx.Hash())
+				}
+				return nil
+			},
+		},
 	},
 }
 
@@ -1206,6 +1223,26 @@ var EthGetTransactionReceipt = MethodTests{
 				_, err := t.eth.TransactionReceipt(ctx, common.HexToHash("deadbeef"))
 				if !errors.Is(err, ethereum.NotFound) {
 					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-auth-list",
+			About: "gets an authorization list transaction",
+			Run: func(ctx context.Context, t *T) error {
+				tx := t.chain.FindTransaction("auth list tx", func(i int, tx *types.Transaction) bool {
+					return tx.Type() == types.SetCodeTxType
+				})
+				receipt, err := t.eth.TransactionReceipt(ctx, tx.Hash())
+				if err != nil {
+					return err
+				}
+				if receipt.TxHash != tx.Hash() {
+					return fmt.Errorf("wrong receipt returned")
+				}
+				if receipt.Type != types.SetCodeTxType {
+					return fmt.Errorf("wrong tx type in receipt")
 				}
 				return nil
 			},
@@ -1455,6 +1492,62 @@ var EthSendRawTransaction = MethodTests{
 					BlobHashes: sidecar.BlobHashes(),
 					BlobFeeCap: uint256.NewInt(params.BlobTxBlobGasPerBlob),
 					Sidecar:    sidecar,
+				}
+				tx := t.chain.MustSignTx(sender, txdata)
+				if err := t.eth.SendTransaction(ctx, tx); err != nil {
+					return err
+				}
+				t.chain.IncNonce(sender, 1)
+				return nil
+			},
+		},
+		{
+			Name:  "send-authorization-list-tx",
+			About: "sends a authorization list transaction",
+			Run: func(ctx context.Context, t *T) error {
+				var (
+					sender, nonce      = t.chain.GetSender(4)
+					basefee            = uint256.MustFromBig(t.chain.Head().BaseFee())
+					fee                = uint256.NewInt(500)
+				)
+				fee.Add(basefee, fee)
+				
+				
+				auth := &types.Authorization{
+					ChainID: t.chain.Config().ChainID,
+					Address: emitContract,
+					Nonce:   uint64(0),
+					V:       big.NewInt(1),
+					R:       big.NewInt(1),
+					S:       big.NewInt(1),
+				}
+				
+				privateKey, err := t.chain.GetPrivateKey(sender)
+				if err != nil {
+			        return err
+			    }
+				
+				signedAuth, err := types.SignAuth(auth, privateKey)
+			    if err != nil {
+			        return err
+			    }
+
+				authList := types.AuthorizationList{signedAuth}
+
+				txdata := &types.SetCodeTx{
+					Nonce:     nonce,
+					To:        emitContract,
+					Gas:       80000,
+					GasTipCap: uint256.NewInt(500),
+					GasFeeCap: fee,
+					Data:      common.FromHex("0x"), 
+					AccessList: types.AccessList{
+						{Address: emitContract, StorageKeys: []common.Hash{{0}, {1}}},
+					},
+					AuthList: authList,
+					V:        uint256.NewInt(1),
+					R:        uint256.NewInt(1),
+					S:        uint256.NewInt(1),
 				}
 				tx := t.chain.MustSignTx(sender, txdata)
 				if err := t.eth.SendTransaction(ctx, tx); err != nil {

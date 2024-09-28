@@ -156,6 +156,17 @@ func (c *Chain) GetSender(idx int) (common.Address, uint64) {
 	return addr, c.senders[addr].Nonce
 }
 
+func (c *Chain) GetPrivateKey(addr common.Address) (*ecdsa.PrivateKey, error) {
+	sender, exists := c.senders[addr]
+	if !exists {
+		return nil, fmt.Errorf("address %s not found in senders", addr.Hex())
+	}
+	if sender.Key == nil {
+		return nil, fmt.Errorf("no private key available for address %s", addr.Hex())
+	}
+	return sender.Key, nil
+}
+
 // IncNonce increases the specified signing account's pending nonce.
 func (c *Chain) IncNonce(addr common.Address, amt uint64) {
 	if _, ok := c.senders[addr]; !ok {
