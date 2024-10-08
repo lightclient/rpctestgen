@@ -1506,13 +1506,12 @@ var EthSendRawTransaction = MethodTests{
 			About: "sends a authorization list transaction",
 			Run: func(ctx context.Context, t *T) error {
 				var (
-					sender, nonce      = t.chain.GetSender(4)
-					basefee            = uint256.MustFromBig(t.chain.Head().BaseFee())
-					fee                = uint256.NewInt(500)
+					sender, nonce = t.chain.GetSender(4)
+					basefee       = uint256.MustFromBig(t.chain.Head().BaseFee())
+					fee           = uint256.NewInt(500)
 				)
 				fee.Add(basefee, fee)
-				
-				
+
 				auth := &types.Authorization{
 					ChainID: t.chain.Config().ChainID,
 					Address: emitContract,
@@ -1521,16 +1520,16 @@ var EthSendRawTransaction = MethodTests{
 					R:       big.NewInt(1),
 					S:       big.NewInt(1),
 				}
-				
+
 				privateKey, err := t.chain.GetPrivateKey(sender)
 				if err != nil {
-			        return err
-			    }
-				
+					return err
+				}
+
 				signedAuth, err := types.SignAuth(auth, privateKey)
-			    if err != nil {
-			        return err
-			    }
+				if err != nil {
+					return err
+				}
 
 				authList := types.AuthorizationList{signedAuth}
 
@@ -1540,7 +1539,7 @@ var EthSendRawTransaction = MethodTests{
 					Gas:       80000,
 					GasTipCap: uint256.NewInt(500),
 					GasFeeCap: fee,
-					Data:      common.FromHex("0x"), 
+					Data:      common.FromHex("0x"),
 					AccessList: types.AccessList{
 						{Address: emitContract, StorageKeys: []common.Hash{{0}, {1}}},
 					},
