@@ -1585,16 +1585,18 @@ var EthSendRawTransaction = MethodTests{
 					sender, nonce = t.chain.GetSender(4)
 					basefee       = uint256.MustFromBig(t.chain.Head().BaseFee())
 					fee           = uint256.NewInt(500)
+					r             = uint256.NewInt(1)
+					s             = uint256.NewInt(1)
 				)
 				fee.Add(basefee, fee)
 
-				auth := &types.Authorization{
-					ChainID: t.chain.Config().ChainID,
+				auth := &types.SetCodeAuthorization{
+					ChainID: t.chain.Config().ChainID.Uint64(),
 					Address: emitContract,
 					Nonce:   uint64(0),
-					V:       big.NewInt(1),
-					R:       big.NewInt(1),
-					S:       big.NewInt(1),
+					V:       uint8(1),
+					R:       *r,
+					S:       *s,
 				}
 
 				privateKey, err := t.chain.GetPrivateKey(sender)
@@ -1602,12 +1604,12 @@ var EthSendRawTransaction = MethodTests{
 					return err
 				}
 
-				signedAuth, err := types.SignAuth(auth, privateKey)
+				signedAuth, err := types.SignSetCode(privateKey, *auth)
 				if err != nil {
 					return err
 				}
 
-				authList := types.AuthorizationList{signedAuth}
+				authList := []types.SetCodeAuthorization{signedAuth}
 
 				txdata := &types.SetCodeTx{
 					Nonce:     nonce,
