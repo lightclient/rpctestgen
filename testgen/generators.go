@@ -1599,12 +1599,7 @@ var EthSendRawTransaction = MethodTests{
 					S:       *s,
 				}
 
-				privateKey, err := t.chain.GetPrivateKey(sender)
-				if err != nil {
-					return err
-				}
-
-				signedAuth, err := types.SignSetCode(privateKey, *auth)
+				signedAuth, err := t.chain.MustSignAuth(sender, *auth)
 				if err != nil {
 					return err
 				}
