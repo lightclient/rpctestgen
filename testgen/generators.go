@@ -1599,7 +1599,7 @@ var EthSendRawTransaction = MethodTests{
 					S:       *s,
 				}
 
-				signedAuth, err := t.chain.MustSignAuth(sender, *auth)
+				signedAuth, err := t.chain.SignAuth(sender, *auth)
 				if err != nil {
 					return err
 				}
