@@ -1149,23 +1149,6 @@ var EthGetTransactionByHash = MethodTests{
 				return nil
 			},
 		},
-		{
-			Name:  "get-authlist-tx",
-			About: "gets a authorization list transaction",
-			Run: func(ctx context.Context, t *T) error {
-				tx := t.chain.FindTransaction("authlist tx", func(i int, tx *types.Transaction) bool {
-					return tx.Type() == types.SetCodeTxType
-				})
-				got, _, err := t.eth.TransactionByHash(ctx, tx.Hash())
-				if err != nil {
-					return err
-				}
-				if got.Hash() != tx.Hash() {
-					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), tx.Hash())
-				}
-				return nil
-			},
-		},
 	},
 }
 
@@ -1282,6 +1265,24 @@ var EthGetTransactionReceipt = MethodTests{
 			},
 		},
 		{
+			Name:  "get-setcode-tx",
+			About: "gets the receipt for a EIP-7702 setcode transaction",
+			Run: func(ctx context.Context, t *T) error {
+				txhash := t.chain.txinfo.EIP7702.AuthorizeTx
+				receipt, err := t.eth.TransactionReceipt(ctx, txhash)
+				if err != nil {
+					return err
+				}
+				if receipt.TxHash != txhash {
+					return fmt.Errorf("wrong receipt returned")
+				}
+				if receipt.Type != types.SetCodeTxType {
+					return fmt.Errorf("wrong tx type in receipt")
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "get-empty-tx",
 			About: "requests the receipt for the zero tx hash",
 			Run: func(ctx context.Context, t *T) error {
@@ -1299,26 +1300,6 @@ var EthGetTransactionReceipt = MethodTests{
 				_, err := t.eth.TransactionReceipt(ctx, common.HexToHash("deadbeef"))
 				if !errors.Is(err, ethereum.NotFound) {
 					return errors.New("expected not found error")
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "get-auth-list",
-			About: "gets an authorization list transaction",
-			Run: func(ctx context.Context, t *T) error {
-				tx := t.chain.FindTransaction("auth list tx", func(i int, tx *types.Transaction) bool {
-					return tx.Type() == types.SetCodeTxType
-				})
-				receipt, err := t.eth.TransactionReceipt(ctx, tx.Hash())
-				if err != nil {
-					return err
-				}
-				if receipt.TxHash != tx.Hash() {
-					return fmt.Errorf("wrong receipt returned")
-				}
-				if receipt.Type != types.SetCodeTxType {
-					return fmt.Errorf("wrong tx type in receipt")
 				}
 				return nil
 			},
@@ -1578,8 +1559,8 @@ var EthSendRawTransaction = MethodTests{
 			},
 		},
 		{
-			Name:  "send-authorization-list-tx",
-			About: "sends a authorization list transaction",
+			Name:  "send-setcode-tx",
+			About: "sends an EIP-7702 setcode transaction",
 			Run: func(ctx context.Context, t *T) error {
 				var (
 					sender, nonce = t.chain.GetSender(4)
