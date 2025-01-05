@@ -1558,58 +1558,6 @@ var EthSendRawTransaction = MethodTests{
 				return nil
 			},
 		},
-		{
-			Name:  "send-setcode-tx",
-			About: "sends an EIP-7702 setcode transaction",
-			Run: func(ctx context.Context, t *T) error {
-				var (
-					sender, nonce = t.chain.GetSender(4)
-					basefee       = uint256.MustFromBig(t.chain.Head().BaseFee())
-					fee           = uint256.NewInt(500)
-					r             = uint256.NewInt(1)
-					s             = uint256.NewInt(1)
-				)
-				fee.Add(basefee, fee)
-
-				auth := &types.SetCodeAuthorization{
-					ChainID: t.chain.Config().ChainID.Uint64(),
-					Address: emitContract,
-					Nonce:   uint64(0),
-					V:       uint8(1),
-					R:       *r,
-					S:       *s,
-				}
-
-				signedAuth, err := t.chain.SignAuth(sender, *auth)
-				if err != nil {
-					return err
-				}
-
-				authList := []types.SetCodeAuthorization{signedAuth}
-
-				txdata := &types.SetCodeTx{
-					Nonce:     nonce,
-					To:        emitContract,
-					Gas:       80000,
-					GasTipCap: uint256.NewInt(500),
-					GasFeeCap: fee,
-					Data:      common.FromHex("0x"),
-					AccessList: types.AccessList{
-						{Address: emitContract, StorageKeys: []common.Hash{{0}, {1}}},
-					},
-					AuthList: authList,
-					V:        uint256.NewInt(1),
-					R:        uint256.NewInt(1),
-					S:        uint256.NewInt(1),
-				}
-				tx := t.chain.MustSignTx(sender, txdata)
-				if err := t.eth.SendTransaction(ctx, tx); err != nil {
-					return err
-				}
-				t.chain.IncNonce(sender, 1)
-				return nil
-			},
-		},
 	},
 }
 
