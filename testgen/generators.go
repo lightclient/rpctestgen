@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,6 +23,10 @@ import (
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/maps"
 )
+
+// estimateGasErrorRatio is the amount of overestimation eth_estimateGas is
+// allowed to produce in order to speed up calculations.
+const estimateGasErrorRatio = 0.015
 
 var (
 	emitContract = common.HexToAddress("0x7dcd17433742f4c0ca53122ab541d0ba67fc27df")
@@ -619,6 +624,187 @@ See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv
 			},
 		},
 		{
+			Name: "call-eip7702-delegated-account",
+			About: `Tests calling a contract via delegated account EIP 7702 
+			See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv.eas for the output structure.`,
+			Run: func(ctx context.Context, t *T) error {
+				msg := ethereum.CallMsg{
+					From: t.chain.txinfo.EIP7702.Account,
+					To:   &t.chain.txinfo.CallMeContract.Addr,
+					// This is the expected input that makes the call pass.
+					// See https://github.com/ethereum/hive/blob/master/cmd/hivechain/contracts/callme.eas
+					Data: []byte{0xff, 0x01},
+				}
+				result, err := t.eth.CallContract(ctx, msg, nil)
+				if err != nil {
+					return err
+				}
+				want := []byte{0xff, 0xee}
+				if !bytes.Equal(result, want) {
+					return fmt.Errorf("unexpected return value (got: %#x, want: %#x)", result, want)
+				}
+				return nil
+			},
+		},
+		{
+			Name: "call-eip7702-eoa-to-delegated-call",
+			About: `Tests calling delegated account from EOA with zero value
+			See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv.eas for the output structure.`,
+			Run: func(ctx context.Context, t *T) error {
+				sender, _ := t.chain.GetSender(1)
+				msg := ethereum.CallMsg{
+					From:  sender,
+					To:    &t.chain.txinfo.EIP7702.Account,
+					Value: big.NewInt(0),
+				}
+				result, err := t.eth.CallContract(ctx, msg, nil)
+				if err != nil {
+					return err
+				}
+				if len(result) == 0 {
+					return fmt.Errorf("empty call result")
+				}
+				return nil
+			},
+		},
+		{
+			Name: "call-eip7702-value-transfer",
+			About: `Tests value transfer from a delegated account
+			See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv.eas for the output structure.`,
+			Run: func(ctx context.Context, t *T) error {
+				msg := ethereum.CallMsg{
+					From:  t.chain.txinfo.EIP7702.Account,
+					To:    &common.Address{0x04},
+					Value: big.NewInt(1000),
+				}
+				result, err := t.eth.CallContract(ctx, msg, nil)
+				if err != nil {
+					return err
+				}
+				if len(result) != 0 {
+					return fmt.Errorf("expected empty result for value transfer, got: %x", result)
+				}
+				return nil
+			},
+		},
+		{
+			Name: "call-eip7702-eoa-to-delegated-value-transfer",
+			About: `Tests value transfer from EOA to delegated account
+			See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv.eas for the output structure.`,
+			Run: func(ctx context.Context, t *T) error {
+				sender, _ := t.chain.GetSender(1)
+				msg := ethereum.CallMsg{
+					From:  sender,
+					To:    &t.chain.txinfo.EIP7702.Account,
+					Value: big.NewInt(23),
+				}
+				result, err := t.eth.CallContract(ctx, msg, nil)
+				if err != nil {
+					return err
+				}
+				if len(result) == 0 {
+					return fmt.Errorf("empty call result")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "call-eip7702-single-auth",
+			About: "Calls a transaction with value and authorization in the EIP-7702 authorization list",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from": caller,
+					"to":   t.chain.txinfo.CallMeContract.Addr,
+					"data": hexutil.Bytes([]byte{0xff, 0x01}),
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got string
+				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
+				if err != nil {
+					return err
+				}
+				want := "0xffee"
+				if got != want {
+					return fmt.Errorf("unexpected return value (got: %#x, want: %#x)", got, want)
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "call-eip7702-single-auth",
+			About: "Calls a transaction with value and authorization in the EIP-7702 authorization list",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from":  caller,
+					"to":    common.Address{0x01},
+					"value": hexutil.Uint64(10),
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got interface{}
+				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "call-eip7702-multiple-auth",
+			About: "Calls a transaction with value and authorization in the EIP-7702 multiple authorization lists",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from":  caller,
+					"to":    common.Address{0x01},
+					"value": hexutil.Uint64(10),
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": common.Address{0x04},
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got interface{}
+				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "call-revert-abi-panic",
 			About: "calls a contract that reverts with an ABI-encoded Panic(uint) value",
 			Run: func(ctx context.Context, t *T) error {
@@ -653,6 +839,55 @@ See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv
 				if err == nil {
 					return fmt.Errorf("expected error for reverting call")
 				}
+				return nil
+			},
+		},
+		{
+			Name:  "eip-7702-authorization-list-empty",
+			About: "Calls a transaction with empty authorization list and expects an error(eip7702 tx type)",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from":              caller,
+					"to":                common.Address{0x01},
+					"authorizationList": []map[string]any{},
+				}
+				var got interface{}
+				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
+				expectedMessage := core.ErrEmptyAuthList.Error()
+				if !strings.Contains(err.Error(), expectedMessage) {
+					return fmt.Errorf("unexpected error message (got: %v, want to contain: %v)", err.Error(), expectedMessage)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "eip-7702-error-when-deploy-contract",
+			About: "error when delegated account tries to deploy code",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from": caller,
+					"data": &hexutil.Bytes{0x60, 0x0},
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got interface{}
+				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
+				expectedMessage := core.ErrSetCodeTxCreate.Error()
+				if !strings.Contains(err.Error(), expectedMessage) {
+					return fmt.Errorf("unexpected error message (got: %v, want to contain: %v)", err.Error(), expectedMessage)
+				}
+
 				return nil
 			},
 		},
@@ -717,6 +952,80 @@ var EthEstimateGas = MethodTests{
 				_, err := t.eth.EstimateGas(ctx, msg)
 				if err == nil {
 					return fmt.Errorf("expected error for failed contract call")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "estimate-eip7702-single-auth",
+			About: "Estimates gas for a transaction with a single authorization in the EIP-7702 authorization list",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from":  caller,
+					"to":    common.Address{0x01},
+					"value": hexutil.Uint64(10),
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got hexutil.Uint64
+				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
+				if err != nil {
+					return err
+				}
+				//21000 + 25000(one address in auth list)
+				want := float64(46000)
+				if float64(got) > want*(1+estimateGasErrorRatio) {
+					return fmt.Errorf("unexpected return value (got: %v, want: %v)", got, want)
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "estimate-eip7702-multiple-auth",
+			About: "Estimates gas for a transaction with a multiple authorization in the EIP-7702 authorization list",
+			Run: func(ctx context.Context, t *T) error {
+				caller := t.chain.txinfo.EIP7702.Account
+				msg := map[string]any{
+					"from":  caller,
+					"to":    common.Address{0x01},
+					"value": hexutil.Uint64(10),
+					"authorizationList": []map[string]any{
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": t.chain.txinfo.EIP7702.ProxyAddr,
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+						{
+							"nonce":   hexutil.Uint64(1),
+							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
+							"address": common.Address{0x02},
+							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
+							"yParity": hexutil.Uint64(56),
+						},
+					},
+				}
+				var got hexutil.Uint64
+				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
+				if err != nil {
+					return err
+				}
+				//21000 + 25000(one address in auth list) + 25000(one address in auth list)
+				want := float64(71000)
+				if float64(got) > want*(1+estimateGasErrorRatio) {
+					return fmt.Errorf("unexpected return value (got: %v, want: %v)", got, want)
 				}
 				return nil
 			},
