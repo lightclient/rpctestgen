@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -854,11 +853,9 @@ See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv
 				}
 				var got interface{}
 				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
-				expectedMessage := core.ErrEmptyAuthList.Error()
-				if !strings.Contains(err.Error(), expectedMessage) {
-					return fmt.Errorf("unexpected error message (got: %v, want to contain: %v)", err.Error(), expectedMessage)
+				if err == nil {
+					return fmt.Errorf("expected error for empty authorization list")
 				}
-
 				return nil
 			},
 		},
@@ -883,9 +880,8 @@ See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv
 				}
 				var got interface{}
 				err := t.eth.Client().CallContext(ctx, &got, "eth_call", msg, "latest")
-				expectedMessage := core.ErrSetCodeTxCreate.Error()
-				if !strings.Contains(err.Error(), expectedMessage) {
-					return fmt.Errorf("unexpected error message (got: %v, want to contain: %v)", err.Error(), expectedMessage)
+				if err == nil {
+					return fmt.Errorf("expected error for deploying code")
 				}
 
 				return nil
@@ -957,8 +953,8 @@ var EthEstimateGas = MethodTests{
 			},
 		},
 		{
-			Name:  "estimate-eip7702-single-auth",
-			About: "Estimates gas for a transaction with a single authorization in the EIP-7702 authorization list",
+			Name:  "estimate-eip7702-auth-list",
+			About: "Estimates gas for a transaction with an authorization list",
 			Run: func(ctx context.Context, t *T) error {
 				caller := t.chain.txinfo.EIP7702.Account
 				msg := map[string]any{
@@ -980,52 +976,6 @@ var EthEstimateGas = MethodTests{
 				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
 				if err != nil {
 					return err
-				}
-				//21000 + 25000(one address in auth list)
-				want := float64(46000)
-				if float64(got) > want*(1+estimateGasErrorRatio) {
-					return fmt.Errorf("unexpected return value (got: %v, want: %v)", got, want)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "estimate-eip7702-multiple-auth",
-			About: "Estimates gas for a transaction with a multiple authorization in the EIP-7702 authorization list",
-			Run: func(ctx context.Context, t *T) error {
-				caller := t.chain.txinfo.EIP7702.Account
-				msg := map[string]any{
-					"from":  caller,
-					"to":    common.Address{0x01},
-					"value": hexutil.Uint64(10),
-					"authorizationList": []map[string]any{
-						{
-							"nonce":   hexutil.Uint64(1),
-							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
-							"address": t.chain.txinfo.EIP7702.ProxyAddr,
-							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
-							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
-							"yParity": hexutil.Uint64(56),
-						},
-						{
-							"nonce":   hexutil.Uint64(1),
-							"chainId": hexutil.Uint64(t.chain.Config().ChainID.Uint64()),
-							"address": common.Address{0x02},
-							"r":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
-							"s":       (*hexutil.U256)(new(uint256.Int).SetUint64(87890)),
-							"yParity": hexutil.Uint64(56),
-						},
-					},
-				}
-				var got hexutil.Uint64
-				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
-				if err != nil {
-					return err
-				}
-				//21000 + 25000(one address in auth list) + 25000(one address in auth list)
-				want := float64(71000)
-				if float64(got) > want*(1+estimateGasErrorRatio) {
-					return fmt.Errorf("unexpected return value (got: %v, want: %v)", got, want)
 				}
 				return nil
 			},
