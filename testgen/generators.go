@@ -23,10 +23,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// estimateGasErrorRatio is the amount of overestimation eth_estimateGas is
-// allowed to produce in order to speed up calculations.
-const estimateGasErrorRatio = 0.015
-
 var (
 	emitContract = common.HexToAddress("0x7dcd17433742f4c0ca53122ab541d0ba67fc27df")
 	nonAccount   = common.HexToAddress("0xc1cadaffffffffffffffffffffffffffffffffff")
@@ -953,8 +949,9 @@ var EthEstimateGas = MethodTests{
 			},
 		},
 		{
-			Name:  "estimate-eip7702-auth-list",
-			About: "Estimates gas for a transaction with an authorization list",
+			Name:     "estimate-eip7702-auth-list",
+			About:    "Estimates gas for a transaction with an authorization list",
+			SpecOnly: true, // EVM gas estimation is not required to be identical across clients
 			Run: func(ctx context.Context, t *T) error {
 				caller := t.chain.txinfo.EIP7702.Account
 				msg := map[string]any{
@@ -971,7 +968,6 @@ var EthEstimateGas = MethodTests{
 							"yParity": hexutil.Uint64(56),
 						},
 					},
-					"SpecOnly": true,
 				}
 				var got hexutil.Uint64
 				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
