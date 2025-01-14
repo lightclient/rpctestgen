@@ -971,6 +971,7 @@ var EthEstimateGas = MethodTests{
 							"yParity": hexutil.Uint64(56),
 						},
 					},
+					"SpecOnly": true,
 				}
 				var got hexutil.Uint64
 				err := t.eth.Client().CallContext(ctx, &got, "eth_estimateGas", msg, "latest")
