@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -90,10 +89,7 @@ var AllMethods = []MethodTests{
 	DebugGetRawBlock,
 	DebugGetRawReceipts,
 	DebugGetRawTransaction,
-
-	// -- header requests are not in the spec yet
-	// EthGetHeaderByNumber,
-	// EthGetHeaderByHash,
+	EthBlobBaseFee,
 
 	// -- gas price tests are disabled because of non-determinism
 	// EthGasPrice,
@@ -143,52 +139,6 @@ var EthChainID = MethodTests{
 	},
 }
 
-// EthGetHeaderByNumber stores a list of all tests against the method.
-var EthGetHeaderByNumber = MethodTests{
-	"eth_getHeaderByNumber",
-	[]Test{
-		{
-			Name:  "get-header-by-number",
-			About: "gets a header by number",
-			Run: func(ctx context.Context, t *T) error {
-				var got types.Header
-				err := t.rpc.CallContext(ctx, &got, "eth_getHeaderByNumber", "0x1")
-				if err != nil {
-					return err
-				}
-				want := t.chain.GetBlock(1)
-				if reflect.DeepEqual(got, want.Header()) {
-					return fmt.Errorf("unexpected header (got: %s, want: %s)", got.Hash(), want.Hash())
-				}
-				return nil
-			},
-		},
-	},
-}
-
-// EthGetHeaderByHash stores a list of all tests against the method.
-var EthGetHeaderByHash = MethodTests{
-	"eth_getHeaderByHash",
-	[]Test{
-		{
-			Name:  "get-header-by-hash",
-			About: "gets a header by hash",
-			Run: func(ctx context.Context, t *T) error {
-				want := t.chain.GetBlock(1).Header()
-				var got types.Header
-				err := t.rpc.CallContext(ctx, &got, "eth_getHeaderByHash", want.Hash())
-				if err != nil {
-					return err
-				}
-				if reflect.DeepEqual(got, want) {
-					return fmt.Errorf("unexpected header (got: %s, want: %s)", got.Hash(), want.Hash())
-				}
-				return nil
-			},
-		},
-	},
-}
-
 // EthGetCode stores a list of all tests against the method.
 var EthGetCode = MethodTests{
 	"eth_getCode",
@@ -203,6 +153,24 @@ var EthGetCode = MethodTests{
 					return err
 				}
 				want := t.chain.state[emitContract].Code
+				if !bytes.Equal(got, want) {
+					return fmt.Errorf("unexpected code (got: %s, want %s)", got, want)
+				}
+				return nil
+			},
+		},
+		{
+			Name: "get-code-eip7702-delegation",
+			About: `requests code of an account that has an EIP-7702 delegation. the server is expected to return
+the delegation designator.`,
+			Run: func(ctx context.Context, t *T) error {
+				account := t.chain.txinfo.EIP7702.Account
+				var got hexutil.Bytes
+				err := t.rpc.CallContext(ctx, &got, "eth_getCode", account, "latest")
+				if err != nil {
+					return err
+				}
+				want := t.chain.state[account].Code
 				if !bytes.Equal(got, want) {
 					return fmt.Errorf("unexpected code (got: %s, want %s)", got, want)
 				}
@@ -402,7 +370,7 @@ var EthGetBlockByNumber = MethodTests{
 	[]Test{
 		{
 			Name:  "get-genesis",
-			About: "gets block 0",
+			About: "gets block number zero",
 			Run: func(ctx context.Context, t *T) error {
 				block, err := t.eth.BlockByNumber(ctx, big.NewInt(0))
 				if err != nil {
@@ -416,7 +384,7 @@ var EthGetBlockByNumber = MethodTests{
 		},
 		{
 			Name:  "get-latest",
-			About: "gets block latest",
+			About: "gets the block with tag \"latest\"",
 			Run: func(ctx context.Context, t *T) error {
 				block, err := t.eth.BlockByNumber(ctx, nil)
 				if err != nil {
@@ -431,7 +399,7 @@ var EthGetBlockByNumber = MethodTests{
 		},
 		{
 			Name:  "get-safe",
-			About: "gets block safe",
+			About: "get the block with tag \"safe\"",
 			Run: func(ctx context.Context, t *T) error {
 				block, err := t.eth.BlockByNumber(ctx, big.NewInt(int64(rpc.SafeBlockNumber)))
 				if err != nil {
@@ -446,7 +414,7 @@ var EthGetBlockByNumber = MethodTests{
 		},
 		{
 			Name:  "get-finalized",
-			About: "gets block finalized",
+			About: "get the block with tag \"finalized\"",
 			Run: func(ctx context.Context, t *T) error {
 				block, err := t.eth.BlockByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
 				if err != nil {
@@ -460,26 +428,85 @@ var EthGetBlockByNumber = MethodTests{
 			},
 		},
 		{
-			Name:  "get-block-n",
-			About: "gets block 2",
+			Name:  "get-block-london-fork",
+			About: "requests a block at the London fork",
 			Run: func(ctx context.Context, t *T) error {
-				block, err := t.eth.BlockByNumber(ctx, big.NewInt(2))
+				hdr, err := t.eth.HeaderByNumber(ctx, t.chain.config.LondonBlock)
 				if err != nil {
 					return err
 				}
-				if n := block.Number().Uint64(); n != 2 {
-					return fmt.Errorf("expected block 2, got block %d", n)
+				if hdr.BaseFee == nil {
+					return fmt.Errorf("missing basefee in block")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-block-merge-fork",
+			About: "requests a block at the merge (Paris) fork",
+			Run: func(ctx context.Context, t *T) error {
+				hdr, err := t.eth.HeaderByNumber(ctx, t.chain.config.MergeNetsplitBlock)
+				if err != nil {
+					return err
+				}
+				if hdr.Difficulty.Sign() > 0 {
+					return fmt.Errorf("block difficulty > 0")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-block-shanghai-fork",
+			About: "requests a block at the Shanghai fork",
+			Run: func(ctx context.Context, t *T) error {
+				blocknum := t.chain.BlockAtTime(*t.chain.config.ShanghaiTime).Number()
+				hdr, err := t.eth.HeaderByNumber(ctx, blocknum)
+				if err != nil {
+					return err
+				}
+				if hdr.WithdrawalsHash == nil {
+					return fmt.Errorf("block has no withdrawalsHash")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-block-cancun-fork",
+			About: "requests a block at the Cancun fork",
+			Run: func(ctx context.Context, t *T) error {
+				blocknum := t.chain.BlockAtTime(*t.chain.config.CancunTime).Number()
+				b, err := t.eth.HeaderByNumber(ctx, blocknum)
+				if err != nil {
+					return err
+				}
+				if b.BlobGasUsed == nil {
+					return fmt.Errorf("block has no blobGasUsed")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-block-prague-fork",
+			About: "requests a block at the Prague fork",
+			Run: func(ctx context.Context, t *T) error {
+				blocknum := t.chain.txinfo.EIP7002.Block
+				hdr, err := t.eth.HeaderByNumber(ctx, big.NewInt(int64(blocknum)))
+				if err != nil {
+					return err
+				}
+				if hdr.RequestsHash == nil || *hdr.RequestsHash == types.EmptyRequestsHash {
+					return fmt.Errorf("block hash empty or missing requestsHash")
 				}
 				return nil
 			},
 		},
 		{
 			Name:  "get-block-notfound",
-			About: "gets block notfound",
+			About: "requests a block number that does not exist",
 			Run: func(ctx context.Context, t *T) error {
 				_, err := t.eth.BlockByNumber(ctx, big.NewInt(1000))
 				if !errors.Is(err, ethereum.NotFound) {
-					return errors.New("get a non-existent block should return notfound")
+					return errors.New("get a non-existent block should return null")
 				}
 				return nil
 			},
@@ -554,6 +581,33 @@ See https://github.com/ethereum/hive/tree/master/cmd/hivechain/contracts/callenv
 				}
 				if len(result) == 0 {
 					return fmt.Errorf("empty call result")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "call-eip7702-delegation",
+			About: `Performs a call to an account that has an EIP-7702 code delegation.`,
+			Run: func(ctx context.Context, t *T) error {
+				msg := ethereum.CallMsg{
+					To:  &t.chain.txinfo.EIP7702.Account,
+					Gas: 100000,
+				}
+				result, err := t.eth.CallContract(ctx, msg, nil)
+				if err != nil {
+					return err
+				}
+				if len(result) == 0 {
+					return fmt.Errorf("empty call result")
+				}
+				expectedOutput := slices.Concat(
+					make([]byte, 12),
+					t.chain.txinfo.EIP7702.Account[:],
+					[]byte("invoked"),
+					make([]byte, 25),
+				)
+				if !bytes.Equal(result, expectedOutput) {
+					return fmt.Errorf("wrong return value: %x", result)
 				}
 				return nil
 			},
@@ -909,6 +963,26 @@ var EthGetTransactionCount = MethodTests{
 			},
 		},
 		{
+			Name: "get-nonce-eip7702-account",
+			About: `Retrieves the nonce for an account that has an EIP-7702 code delegation applied.
+For such accounts, the nonce stored in state does not match the 'transaction count'.`,
+			Run: func(ctx context.Context, t *T) error {
+				addr := t.chain.txinfo.EIP7702.Account
+				got, err := t.eth.NonceAt(ctx, addr, nil)
+				if err != nil {
+					return err
+				}
+				want := t.chain.state[addr].Nonce
+				if got != want {
+					return fmt.Errorf("unexpected nonce (got: %d, want: %d)", got, want)
+				}
+				if want == 0 {
+					return fmt.Errorf("nonce for account %v is zero", addr)
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "get-nonce-unknown-account",
 			About: "gets nonce for a non-existent account",
 			Run: func(ctx context.Context, t *T) error {
@@ -1053,6 +1127,21 @@ var EthGetTransactionByHash = MethodTests{
 			},
 		},
 		{
+			Name:  "get-setcode-tx",
+			About: "retrieves an EIP-7702 transaction",
+			Run: func(ctx context.Context, t *T) error {
+				txhash := t.chain.txinfo.EIP7702.AuthorizeTx
+				got, _, err := t.eth.TransactionByHash(ctx, txhash)
+				if err != nil {
+					return err
+				}
+				if got.Type() != types.SetCodeTxType {
+					return fmt.Errorf("transaction is not of type %v", types.SetCodeTxType)
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "get-empty-tx",
 			About: "requests the zero transaction hash",
 			Run: func(ctx context.Context, t *T) error {
@@ -1184,6 +1273,24 @@ var EthGetTransactionReceipt = MethodTests{
 					return fmt.Errorf("wrong receipt returned")
 				}
 				if receipt.Type != types.BlobTxType {
+					return fmt.Errorf("wrong tx type in receipt")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "get-setcode-tx",
+			About: "gets the receipt for a EIP-7702 setcode transaction",
+			Run: func(ctx context.Context, t *T) error {
+				txhash := t.chain.txinfo.EIP7702.AuthorizeTx
+				receipt, err := t.eth.TransactionReceipt(ctx, txhash)
+				if err != nil {
+					return err
+				}
+				if receipt.TxHash != txhash {
+					return fmt.Errorf("wrong receipt returned")
+				}
+				if receipt.Type != types.SetCodeTxType {
 					return fmt.Errorf("wrong tx type in receipt")
 				}
 				return nil
@@ -1433,8 +1540,8 @@ var EthSendRawTransaction = MethodTests{
 					basefee            = uint256.MustFromBig(t.chain.Head().BaseFee())
 					fee                = uint256.NewInt(500)
 					emptyBlob          = kzg4844.Blob{}
-					emptyBlobCommit, _ = kzg4844.BlobToCommitment(emptyBlob)
-					emptyBlobProof, _  = kzg4844.ComputeBlobProof(emptyBlob, emptyBlobCommit)
+					emptyBlobCommit, _ = kzg4844.BlobToCommitment(&emptyBlob)
+					emptyBlobProof, _  = kzg4844.ComputeBlobProof(&emptyBlob, emptyBlobCommit)
 				)
 				fee.Add(basefee, fee)
 				sidecar := &types.BlobTxSidecar{
@@ -1497,6 +1604,21 @@ var EthMaxPriorityFeePerGas = MethodTests{
 					return err
 				}
 				return nil
+			},
+		},
+	},
+}
+
+var EthBlobBaseFee = MethodTests{
+	"eth_blobBaseFee",
+	[]Test{
+		{
+			Name:  "get-current-blobfee",
+			About: "gets the current blob fee in wei",
+			Run: func(ctx context.Context, t *T) error {
+				var result hexutil.Big
+				err := t.rpc.CallContext(ctx, &result, "eth_blobBaseFee")
+				return err
 			},
 		},
 	},

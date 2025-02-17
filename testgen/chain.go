@@ -45,6 +45,8 @@ type ChainTxInfo struct {
 	CallMeContract      *ContractInfo `json:"deploy-callme"`
 	CallEnvContract     *ContractInfo `json:"deploy-callenv"`
 	CallRevertContract  *ContractInfo `json:"deploy-callrevert"`
+	EIP7702             *EIP7702Info  `json:"tx-eip7702"`
+	EIP7002             *EIP7002Info  `json:"tx-request-eip7002"`
 }
 
 // TxInfo is a transaction record created by hivechain.
@@ -62,6 +64,17 @@ type TxInfo struct {
 type ContractInfo struct {
 	Addr  common.Address `json:"contract"`
 	Block hexutil.Uint64 `json:"block"`
+}
+
+type EIP7702Info struct {
+	Account     common.Address `json:"account"`
+	ProxyAddr   common.Address `json:"proxyAddr"`
+	AuthorizeTx common.Hash    `json:"authorizeTx"`
+}
+
+type EIP7002Info struct {
+	TxHash common.Hash    `json:"txhash"`
+	Block  hexutil.Uint64 `json:"block"`
 }
 
 // NewChain takes the given chain.rlp file, decodes it, and returns
@@ -118,6 +131,16 @@ func (c *Chain) Config() *params.ChainConfig {
 // GetBlock returns the block at the specified number.
 func (c *Chain) GetBlock(number int) *types.Block {
 	return c.blocks[number]
+}
+
+// BlockAtTime returns the current block at a given timestamp.
+func (c *Chain) BlockAtTime(timestamp uint64) *types.Block {
+	for _, b := range c.blocks {
+		if b.Time() >= timestamp {
+			return b
+		}
+	}
+	return nil
 }
 
 // BlockWithTransactions returns a block that has a matching transaction.
@@ -191,6 +214,21 @@ func (c *Chain) MustSignTx(from common.Address, txdata types.TxData) *types.Tran
 		panic(fmt.Errorf("account not available for signing: %s", from))
 	}
 	return types.MustSignNewTx(acc.Key, signer, txdata)
+}
+
+// SignAuth signs a SetCode Authorization for the specified from account, so long as that
+// account was in the hivechain accounts dump.
+func (c *Chain) SignAuth(from common.Address, auth types.SetCodeAuthorization) (types.SetCodeAuthorization, error) {
+	acc, ok := c.senders[from]
+	if !ok {
+		panic(fmt.Errorf("account not available for signing: %s", from))
+	}
+
+	signedAuth, err := types.SignSetCode(acc.Key, auth)
+	if err != nil {
+		return types.SetCodeAuthorization{}, err
+	}
+	return signedAuth, nil
 }
 
 func loadGenesis(genesisFile string) (core.Genesis, error) {
