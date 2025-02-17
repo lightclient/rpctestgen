@@ -2023,8 +2023,8 @@ var EthSimulateV1 = MethodTests{
 			Run: func(ctx context.Context, t *T) error {
 				var (
 					emptyBlob          = kzg4844.Blob{}
-					emptyBlobCommit, _ = kzg4844.BlobToCommitment(emptyBlob)
-					emptyBlobProof, _  = kzg4844.ComputeBlobProof(emptyBlob, emptyBlobCommit)
+					emptyBlobCommit, _ = kzg4844.BlobToCommitment(&emptyBlob)
+					emptyBlobProof, _  = kzg4844.ComputeBlobProof(&emptyBlob, emptyBlobCommit)
 				)
 				sidecar := &types.BlobTxSidecar{
 					Blobs:       []kzg4844.Blob{emptyBlob},
@@ -4912,7 +4912,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(35)),
+								Number:        (*hexutil.Big)(big.NewInt(46)),
 								FeeRecipient:  &common.Address{0xc2},
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
@@ -5399,7 +5399,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(31)),
+								Number:        (*hexutil.Big)(big.NewInt(46)),
 								Time:          getUint64Ptr(1003),
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao,
@@ -5660,7 +5660,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(45)),
+								Number: (*hexutil.Big)(big.NewInt(47)),
 							},
 							Calls: []TransactionArgs{
 								{
