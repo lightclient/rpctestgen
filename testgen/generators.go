@@ -3170,7 +3170,7 @@ var EthSimulateV1 = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -4905,7 +4905,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(376991040),
+									Balance: newRPCBalance(500000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: getBalanceGetter(),
@@ -5660,7 +5660,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(47)),
+								Number: (*hexutil.Big)(big.NewInt(57)),
 							},
 							Calls: []TransactionArgs{
 								{
