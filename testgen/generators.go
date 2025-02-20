@@ -2713,10 +2713,11 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-override-block-num",
 			About: "simulates calls overriding the block num",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(31)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 1)),
 						},
 						Calls: []TransactionArgs{
 							{
@@ -2730,7 +2731,7 @@ var EthSimulateV1 = MethodTests{
 						},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(32)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 2)),
 						},
 						Calls: []TransactionArgs{{
 							From: &common.Address{0xc1},
@@ -2751,10 +2752,11 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-num-order-38020",
 			About: "simulates calls with invalid block num order (-38020)",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(120)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 100)),
 						},
 						Calls: []TransactionArgs{{
 							From: &common.Address{0xc1},
@@ -2766,7 +2768,7 @@ var EthSimulateV1 = MethodTests{
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(110)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 90)),
 						},
 						Calls: []TransactionArgs{{
 							From: &common.Address{0xc0},
@@ -2787,15 +2789,16 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-timestamp-order-38021",
 			About: "Error: simulates calls with invalid timestamp order (-38021)",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(12),
+								Time: getUint64Ptr(latestBlockTime + 12),
 							},
 						}, {
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(11),
+								Time: getUint64Ptr(latestBlockTime + 11),
 							},
 						},
 					},
@@ -2809,15 +2812,16 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-timestamp-non-increment",
 			About: "Error: simulates calls with timestamp staying the same",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(12),
+								Time: getUint64Ptr(latestBlockTime + 12),
 							},
 						}, {
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(12),
+								Time: getUint64Ptr(latestBlockTime + 12),
 							},
 						},
 					},
@@ -2831,15 +2835,16 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-timestamps-incrementing",
 			About: "checks that you can set timestamp and increment it in next block",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(11),
+								Time: getUint64Ptr(latestBlockTime + 11),
 							},
 						}, {
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(12),
+								Time: getUint64Ptr(latestBlockTime + 12),
 							},
 						},
 					},
@@ -2853,11 +2858,12 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-timestamp-auto-increment",
 			About: "Error: simulates calls with timestamp incrementing over another",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(11),
+								Time: getUint64Ptr(latestBlockTime + 11),
 							},
 						},
 						{
@@ -2865,7 +2871,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Time: getUint64Ptr(12),
+								Time: getUint64Ptr(latestBlockTime + 12),
 							},
 						},
 						{
@@ -2957,7 +2963,7 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{{
 						StateOverrides: &StateOverride{
 							common.Address{0xc2}: OverrideAccount{
-								Code: blockHashCallerByteCode(),
+								Code: blockHashDeltaCallerByteCode(),
 							},
 						},
 						Calls: []TransactionArgs{{
@@ -2987,6 +2993,7 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-blockhash-complex",
 			About: "gets blockhash of simulated block",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						StateOverrides: &StateOverride{
@@ -2994,11 +3001,8 @@ var EthSimulateV1 = MethodTests{
 								Balance: newRPCBalance(2000000),
 							},
 							common.Address{0xc2}: OverrideAccount{
-								Code: blockHashCallerByteCode(),
+								Code: blockHashDeltaCallerByteCode(),
 							},
-						},
-						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(21)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -3007,7 +3011,7 @@ var EthSimulateV1 = MethodTests{
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(30)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 30)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -3016,7 +3020,7 @@ var EthSimulateV1 = MethodTests{
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(40)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 40)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -3034,6 +3038,7 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-blockhash-start-before-head",
 			About: "gets blockhash of simulated block",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						StateOverrides: &StateOverride{
@@ -3041,11 +3046,11 @@ var EthSimulateV1 = MethodTests{
 								Balance: newRPCBalance(2000000),
 							},
 							common.Address{0xc2}: OverrideAccount{
-								Code: blockHashCallerByteCode(),
+								Code: blockHashDeltaCallerByteCode(),
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(25)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 5)),
 						},
 						Calls: []TransactionArgs{
 							{
@@ -3061,7 +3066,7 @@ var EthSimulateV1 = MethodTests{
 						},
 					}, {
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(25)),
+							Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 6)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -3076,7 +3081,7 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set-1",
+			Name:  "ethSimulate-empty-with-block-num-set-firstblock",
 			About: "set block number otherwise empty",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
@@ -3088,38 +3093,41 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set-19",
-			About: "set block number otherwise empty",
+			Name:  "ethSimulate-empty-with-block-num-set-minusone",
+			About: "set block number otherwise empty with latest - 1",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(19)))
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(latestBlockNumber-1)))
 				return nil
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set-20",
+			Name:  "ethSimulate-empty-with-block-num-set-current",
 			About: "set block number otherwise empty with latest",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(20)))
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(latestBlockNumber)))
 				return nil
 			},
 		},
 		{
-			Name:  "ethSimulate-empty-with-block-num-set-21",
-			About: "set block number otherwise empty with latest",
+			Name:  "ethSimulate-empty-with-block-num-set-plus1",
+			About: "set block number otherwise empty with latest + 1",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(21)))
+				t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(latestBlockNumber+1)))
 				return nil
 			},
 		},
@@ -3905,13 +3913,15 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-override-all-in-BlockStateCalls",
 			About: "override all values in block and see that they are set in return value",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				feeRecipient := common.Address{0xc2}
 				randDao := common.Hash{0xc3}
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
-							Number:        (*hexutil.Big)(big.NewInt(1001)),
-							Time:          getUint64Ptr(1003),
+							Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 10)),
+							Time:          getUint64Ptr(latestBlockTime + 10),
 							GasLimit:      getUint64Ptr(1004),
 							FeeRecipient:  &feeRecipient,
 							PrevRandao:    &randDao,
@@ -4652,24 +4662,26 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-block-override-reflected-in-contract-simple",
 			About: "Checks that block overrides are true in contract for block number and time",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(25)),
-								Time:   getUint64Ptr(1000),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 5)),
+								Time:   getUint64Ptr(latestBlockTime + 10),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(30)),
-								Time:   getUint64Ptr(1010),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 10)),
+								Time:   getUint64Ptr(latestBlockTime + 20),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(41)),
-								Time:   getUint64Ptr(2000),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 20)),
+								Time:   getUint64Ptr(latestBlockTime + 30),
 							},
 						},
 					},
@@ -4718,6 +4730,8 @@ var EthSimulateV1 = MethodTests{
 				prevRandDao1 := common.BytesToHash(*hex2Bytes("123"))
 				prevRandDao2 := common.BytesToHash(*hex2Bytes("1234"))
 				prevRandDao3 := common.BytesToHash(*hex2Bytes("12345"))
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
@@ -4727,8 +4741,8 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(25)),
-								Time:          getUint64Ptr(1000),
+								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 5)),
+								Time:          getUint64Ptr(latestBlockTime + 10),
 								GasLimit:      getUint64Ptr(190000),
 								FeeRecipient:  &common.Address{0xc0},
 								PrevRandao:    &prevRandDao1,
@@ -4744,8 +4758,8 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(30)),
-								Time:          getUint64Ptr(3000),
+								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 10)),
+								Time:          getUint64Ptr(latestBlockTime + 10),
 								GasLimit:      getUint64Ptr(300000),
 								FeeRecipient:  &common.Address{0xc1},
 								PrevRandao:    &prevRandDao2,
@@ -4761,8 +4775,8 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(31)),
-								Time:          getUint64Ptr(30000),
+								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 15)),
+								Time:          getUint64Ptr(latestBlockTime + 20),
 								GasLimit:      getUint64Ptr(190002),
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao3,
@@ -4787,6 +4801,7 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-add-more-non-defined-BlockStateCalls-than-fit",
 			About: "Add more BlockStateCalls between two BlockStateCalls than it actually fits there",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
@@ -4796,7 +4811,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(105)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 100)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4817,7 +4832,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(106)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 101)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4838,6 +4853,7 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-add-more-non-defined-BlockStateCalls-than-fit-but-now-with-fit",
 			About: "Not all block numbers are defined",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
@@ -4847,7 +4863,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(105)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 105)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4868,7 +4884,7 @@ var EthSimulateV1 = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(120)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 120)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -4900,6 +4916,7 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-fee-recipient-receiving-funds",
 			About: "Check that fee recipient gets funds",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{
 						{
@@ -4912,7 +4929,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(46)),
+								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 42)),
 								FeeRecipient:  &common.Address{0xc2},
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 							},
@@ -5390,6 +5407,8 @@ var EthSimulateV1 = MethodTests{
 			Name:  "ethSimulate-use-as-many-features-as-possible",
 			About: "try using all eth simulates features at once",
 			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				prevRandDao := common.BytesToHash(*hex2Bytes("12345"))
 				stateChanges := make(map[common.Hash]common.Hash)
 				stateChanges[common.BytesToHash(*hex2Bytes("0000000000000000000000000000000000000000000000000000000000000000"))] = common.Hash{0x12} //slot 0 -> 0x12
@@ -5399,8 +5418,8 @@ var EthSimulateV1 = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number:        (*hexutil.Big)(big.NewInt(46)),
-								Time:          getUint64Ptr(1003),
+								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 46)),
+								Time:          getUint64Ptr(latestBlockTime + 103),
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao,
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
