@@ -2957,13 +2957,13 @@ var EthSimulateV1 = MethodTests{
 		},
 		{
 			Name:  "ethSimulate-blockhash-simple",
-			About: "gets blockhash of previous block (included in original chain)",
+			About: "gets blockhash of block 1 (included in original chain)",
 			Run: func(ctx context.Context, t *T) error {
 				params := ethSimulateOpts{
 					BlockStateCalls: []CallBatch{{
 						StateOverrides: &StateOverride{
 							common.Address{0xc2}: OverrideAccount{
-								Code: blockHashDeltaCallerByteCode(),
+								Code: blockHashCallerByteCode(),
 							},
 						},
 						Calls: []TransactionArgs{{
@@ -5679,7 +5679,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(57)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 57)),
 							},
 							Calls: []TransactionArgs{
 								{
