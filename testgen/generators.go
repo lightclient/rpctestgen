@@ -5798,6 +5798,39 @@ var EthSimulateV1 = MethodTests{
 				return nil
 			},
 		},
+		{
+			Name:  "ethSimulate-blocknumber-increment",
+			About: "blocknumbers should increment",
+			Run: func(ctx context.Context, t *T) error {
+				latestBlockNumber := t.chain.Head().Number().Int64()
+				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 10)),
+								Time:   getUint64Ptr(latestBlockTime + 4),
+							},
+						},
+						{}, {}, {}, {}, {},
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 30)),
+							},
+						},
+						{}, {}, {},
+					},
+					TraceTransfers:         true,
+					Validation:             false,
+					ReturnFullTransactions: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	},
 }
 
