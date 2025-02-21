@@ -5419,7 +5419,7 @@ var EthSimulateV1 = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:        (*hexutil.Big)(big.NewInt(latestBlockNumber + 46)),
-								Time:          getUint64Ptr(latestBlockTime + 103),
+								Time:          getUint64Ptr(latestBlockTime + 4),
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao,
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
@@ -5679,7 +5679,7 @@ var EthSimulateV1 = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 57)),
+								Number: (*hexutil.Big)(big.NewInt(latestBlockNumber + 20)),
 							},
 							Calls: []TransactionArgs{
 								{
