@@ -17,9 +17,10 @@ type ContentDescriptor struct {
 // methodSchema stores all the schemas neccessary to validate a request or
 // response corresponding to the method.
 type methodSchema struct {
-	name   string
-	params []*ContentDescriptor
-	result *ContentDescriptor
+	name       string
+	params     []*ContentDescriptor
+	result     *ContentDescriptor
+	errorGroup ErrorGroups // Added error groups extension support
 }
 
 // parseSpec reads an OpenRPC specification and parses out each
@@ -79,6 +80,8 @@ func parseSpec(filename string) (map[string]*methodSchema, error) {
 			required: required,
 			schema:   *obj.Schema.JSONSchemaObject,
 		}
+
+		ms.errorGroup = method.XErrorGroup
 		parsed[string(*method.Name)] = &ms
 	}
 
@@ -125,12 +128,12 @@ func checkCDOR(obj openrpc.ContentDescriptorOrReference) error {
 	return nil
 }
 
-func readSpec(path string) (*openrpc.OpenrpcDocument, error) {
+func readSpec(path string) (*ExtendedOpenrpcDocument, error) {
 	spec, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var doc openrpc.OpenrpcDocument
+	var doc ExtendedOpenrpcDocument
 	if err := json.Unmarshal(spec, &doc); err != nil {
 		return nil, err
 	}
