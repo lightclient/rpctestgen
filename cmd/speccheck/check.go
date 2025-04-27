@@ -29,15 +29,24 @@ func checkSpec(methods map[string]*methodSchema, rts []*roundTrip, re *regexp.Re
 
 			// Find matching error group
 			foundErrorCode := false
-			var foundErrGroup *ErrorObject
-			for _, errGroups := range method.errorGroups {
-				for _, errGrp := range errGroups {
-					if errorResp.Code == errGrp.Code {
-						foundErrorCode = true
-						foundErrGroup = &errGrp
+			var foundErr *openrpc.ErrorObject
+
+			for _, errGroupRef := range method.errorGroups {
+				if errGroupRef.ErrorObjects != nil {
+					for _, errObjRef := range errGroupRef.ErrorObjects {
+						// Check if it's a valid error object and not a reference
+						if errObjRef.ErrorObject != nil && errObjRef.ErrorObject.Code != nil {
+							code := int(*errObjRef.ErrorObject.Code)
+							if errorResp.Code == code {
+								foundErrorCode = true
+								foundErr = errObjRef.ErrorObject
+
+							}
+						}
 					}
 				}
 			}
+
 			if !foundErrorCode {
 				// TODO: temporarily ignore this error but print until the spec is updated
 				fmt.Printf("[WARN]: ERROR CODE: %d not found for method %s in %s \n",
@@ -46,15 +55,16 @@ func checkSpec(methods map[string]*methodSchema, rts []*roundTrip, re *regexp.Re
 			}
 
 			// Validate error message
-			if foundErrGroup.Message != "" && foundErrGroup.Message != errorResp.Message {
+			if foundErr.Message != nil && string(*foundErr.Message) != errorResp.Message {
 				// TODO: temporarily ignore this error but print until the spec is updated (Discuss if validation is needed on this one)
 				fmt.Printf("[WARN]: ERROR MESSAGE: %q does not match expected: %q in %s \n",
-					errorResp.Message, foundErrGroup.Message, rt.name)
+					errorResp.Message, string(*foundErr.Message), rt.name)
 				continue
 			}
 			// Skip result validation as this is an error response
 			continue
 		}
+
 		if len(method.params) < len(rt.params) {
 			return fmt.Errorf("%s: too many parameters", method.name)
 		}

@@ -2,22 +2,42 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	openrpc "github.com/open-rpc/meta-schema"
 )
 
-// ErrorObject represents a single error in an error group
-type ErrorObject struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+type ErrorGroupOrReference struct {
+	ErrorObjects    []openrpc.ErrorOrReference `json:"-"`
+	ReferenceObject *openrpc.ReferenceObject   `json:"-"`
 }
 
-// ErrorGroup represents a group of errors
-type ErrorGroup []ErrorObject
+func (e *ErrorGroupOrReference) UnmarshalJSON(data []byte) error {
+	var refObj openrpc.ReferenceObject
+	// If ErrorGroup has a reference
+	if err := json.Unmarshal(data, &refObj); err == nil && refObj.Ref != nil {
+		return fmt.Errorf("references not supported in error groups: %v", *refObj.Ref)
+	}
 
-// ErrorGroups is an array of error groups
-type ErrorGroups []ErrorGroup
+	var errors []openrpc.ErrorOrReference
+	if err := json.Unmarshal(data, &errors); err == nil {
+		// If the ErrorObject has a reference TODO: validate if this case is needed
+		for _, errObj := range errors {
+			if errObj.ReferenceObject != nil {
+				if err := json.Unmarshal(data, errObj.ErrorObject); err == nil {
+					return fmt.Errorf("references not supported in error Objects: %v", *refObj.Ref)
+				}
+			}
+		}
+		e.ErrorObjects = errors
+		return nil
+	}
+
+	return fmt.Errorf("failed to unmarshal error group")
+}
+
+// ErrorGroups is an array of error groups or reference
+type ErrorGroups []ErrorGroupOrReference
 
 // Add support for error group extensions in method objects
 type ExtendedMethodObject struct {
