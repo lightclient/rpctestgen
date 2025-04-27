@@ -2,14 +2,34 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	openrpc "github.com/open-rpc/meta-schema"
 )
 
+type ErrorOrReference struct {
+	ErrorObject     *openrpc.ErrorObject
+	ReferenceObject *openrpc.ReferenceObject
+}
+
+func (o *ErrorOrReference) UnmarshalJSON(bytes []byte) error {
+	var refObj openrpc.ReferenceObject
+	// If ErrorObj has a reference
+	if err := json.Unmarshal(bytes, &refObj); err == nil {
+		return fmt.Errorf("references not supported as error Objects: %v", *refObj.Ref)
+	}
+	var errObj openrpc.ErrorObject
+	if err := json.Unmarshal(bytes, &errObj); err == nil {
+		o.ErrorObject = &errObj
+		return nil
+	}
+	return errors.New("failed to unmarshal one of the object properties")
+}
+
 type ErrorGroupOrReference struct {
-	ErrorObjects    []openrpc.ErrorOrReference `json:"-"`
-	ReferenceObject *openrpc.ReferenceObject   `json:"-"`
+	ErrorObjects    []ErrorOrReference       `json:"-"`
+	ReferenceObject *openrpc.ReferenceObject `json:"-"`
 }
 
 func (e *ErrorGroupOrReference) UnmarshalJSON(data []byte) error {
@@ -19,21 +39,13 @@ func (e *ErrorGroupOrReference) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("references not supported in error groups: %v", *refObj.Ref)
 	}
 
-	var errors []openrpc.ErrorOrReference
-	if err := json.Unmarshal(data, &errors); err == nil {
-		// If the ErrorObject has a reference TODO: validate if this case is needed
-		for _, errObj := range errors {
-			if errObj.ReferenceObject != nil {
-				if err := json.Unmarshal(data, errObj.ErrorObject); err == nil {
-					return fmt.Errorf("references not supported in error Objects: %v", *refObj.Ref)
-				}
-			}
-		}
-		e.ErrorObjects = errors
-		return nil
+	var errors []ErrorOrReference
+	if err := json.Unmarshal(data, &errors); err != nil {
+		return err
 	}
+	e.ErrorObjects = errors
 
-	return fmt.Errorf("failed to unmarshal error group")
+	return nil
 }
 
 // ErrorGroups is an array of error groups or reference
