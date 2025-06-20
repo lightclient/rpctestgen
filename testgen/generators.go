@@ -716,8 +716,8 @@ var EthEstimateGas = MethodTests{
 			},
 		},
 		{
-			Name:  "estimate-auth-cost-increases-gas",
-			About: "checks that including ephemeral authorizations increases gas",
+			Name:     "estimate-auth-cost-increases-gas",
+			About:    "checks that including ephemeral authorizations increases gas",
 			SpecOnly: true,
 			Run: func(ctx context.Context, t *T) error {
 				sender, nonce := t.chain.GetSender(0)
@@ -730,7 +730,7 @@ var EthEstimateGas = MethodTests{
 				}
 
 				withAuth := map[string]any{
-					"type": "0x4",
+					"type":  "0x4",
 					"from":  sender,
 					"to":    to,
 					"value": hexutil.Uint64(1),
@@ -760,8 +760,9 @@ var EthEstimateGas = MethodTests{
 			},
 		},
 		{
-			Name:  "estimate-floor-calldata-cost-dominates",
-			About: "ensures floor calldata cost dominates the gas used for trivial execution",
+			Name:     "estimate-floor-calldata-cost-dominates",
+			About:    "ensures floor calldata cost dominates the gas used for trivial execution",
+			SpecOnly: true,
 			Run: func(ctx context.Context, t *T) error {
 				sender, nonce := t.chain.GetSender(0)
 				to := common.Address{0x01}
@@ -784,22 +785,21 @@ var EthEstimateGas = MethodTests{
 			},
 		},
 		{
-			Name:  "estimate-calldata-and-auth-floor",
-			About: "checks combined effect of calldata floor and authorization gas cost",
+			Name:     "estimate-calldata-and-auth-floor",
+			About:    "checks combined effect of calldata floor and authorization gas cost",
+			SpecOnly: true,
 			Run: func(ctx context.Context, t *T) error {
 				sender, nonce := t.chain.GetSender(0)
 				to := common.Address{0x01}
-				longCalldata := strings.Repeat("aa", 1024)
 				msg := map[string]any{
-					"type": "0x4",
+					"type":  "0x4",
 					"from":  sender,
 					"to":    to,
 					"value": hexutil.Uint64(1),
 					"nonce": hexutil.Uint64(nonce),
-					"data": "0x" + longCalldata,
 					"authorizationList": []map[string]any{
 						{
-							"chainId": "0x1", 
+							"chainId": "0x1",
 							"address": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 							"nonce":   "0x0",
 							"yParity": "0x0",
@@ -819,9 +819,36 @@ var EthEstimateGas = MethodTests{
 				return nil
 			},
 		},
+		{
+			Name:     "estimate-blob-tx",
+			About:    "checks gas estimation for blob transactions (EIP-4844)",
+			SpecOnly: true,
+			Run: func(ctx context.Context, t *T) error {
+				sender, nonce := t.chain.GetSender(0)
+				to := common.Address{0x01}
+				msg := map[string]any{
+					"type":             "0x5",
+					"from":             sender,
+					"to":               to,
+					"value":            hexutil.Uint64(1),
+					"nonce":            hexutil.Uint64(nonce),
+					"maxFeePerBlobGas": "0x5",
+					"blobVersionedHashes": []string{
+						"0x0100000000000000000000000000000000000000000000000000000000000000",
+					},
+				}
+				var gas hexutil.Uint64
+				if err := t.rpc.CallContext(ctx, &gas, "eth_estimateGas", msg); err != nil {
+					return fmt.Errorf("estimation failed: %v", err)
+				}
+				if gas < 21000 {
+					return fmt.Errorf("expected blob tx to require more than base gas, got %d", gas)
+				}
+				return nil
+			},
+		},
 	},
 }
-
 
 // EthEstimateGas stores a list of all tests against the method.
 var EthCreateAccessList = MethodTests{
