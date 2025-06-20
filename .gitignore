@@ -4,3 +4,4 @@ ethash/
 /geth
 /openrpc.json
 
+testgen/utils.go
