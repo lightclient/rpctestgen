@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
 
 	openrpc "github.com/open-rpc/meta-schema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -18,12 +17,54 @@ func checkSpec(methods map[string]*methodSchema, rts []*roundTrip, re *regexp.Re
 		if !ok {
 			return fmt.Errorf("undefined method: %s", rt.method)
 		}
-		// skip validator of test if name includes "invalid" as the schema
-		// doesn't yet support it.
-		// TODO(matt): create error schemas.
-		if strings.Contains(rt.name, "invalid") {
+
+		// TODO: pile up the errors instead of returning on the first one
+		if rt.response.Result == nil && rt.response.Error != nil {
+
+			errorResp := rt.response.Error
+			// TODO: remove this once the spec is updated, Geth return 3 for all VMErrors
+			if errorResp.Code == 3 {
+				continue
+			}
+
+			// Find matching error group
+			foundErrorCode := false
+			var foundErr *openrpc.ErrorObject
+
+			for _, errGroupRef := range method.errorGroups {
+				if errGroupRef.ErrorObjects != nil {
+					for _, errObjRef := range errGroupRef.ErrorObjects {
+						// Check if it's a valid error object and not a reference
+						if errObjRef.ErrorObject != nil && errObjRef.ErrorObject.Code != nil {
+							code := int(*errObjRef.ErrorObject.Code)
+							if errorResp.Code == code {
+								foundErrorCode = true
+								foundErr = errObjRef.ErrorObject
+
+							}
+						}
+					}
+				}
+			}
+
+			if !foundErrorCode {
+				// TODO: temporarily ignore this error but print until the spec is updated
+				fmt.Printf("[WARN]: ERROR CODE: %d not found for method %s in %s \n",
+					errorResp.Code, rt.method, rt.name)
+				continue
+			}
+
+			// Validate error message
+			if foundErr.Message != nil && string(*foundErr.Message) != errorResp.Message {
+				// TODO: temporarily ignore this error but print until the spec is updated (Discuss if validation is needed on this one)
+				fmt.Printf("[WARN]: ERROR MESSAGE: %q does not match expected: %q in %s \n",
+					errorResp.Message, string(*foundErr.Message), rt.name)
+				continue
+			}
+			// Skip result validation as this is an error response
 			continue
 		}
+
 		if len(method.params) < len(rt.params) {
 			return fmt.Errorf("%s: too many parameters", method.name)
 		}
@@ -40,10 +81,7 @@ func checkSpec(methods map[string]*methodSchema, rts []*roundTrip, re *regexp.Re
 				return fmt.Errorf("unable to validate parameter in %s: %s", rt.name, err)
 			}
 		}
-		if rt.response.Result == nil && rt.response.Error != nil {
-			// skip validation of errors, they haven't been standardized
-			continue
-		}
+
 		if err := validate(&method.result.schema, rt.response.Result, fmt.Sprintf("%s.result", rt.method)); err != nil {
 			// Print out the value and schema if there is an error to further debug.
 			buf, _ := json.Marshal(method.result.schema)
