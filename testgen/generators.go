@@ -1986,6 +1986,43 @@ var EthGetLogs = MethodTests{
 				return nil
 			},
 		},
+		{
+			Name:  "blockhash-all",
+			About: "queries for all logs of a specific block hash",
+			Run: func(ctx context.Context, t *T) error {
+				emits := t.chain.txinfo.DynamicFeeEmit
+				info := emits[len(emits)-1]
+				hash := t.chain.GetBlock(int(info.Block)).Hash()
+				result, err := t.eth.FilterLogs(ctx, ethereum.FilterQuery{BlockHash: &hash})
+				if err != nil {
+					return err
+				}
+				if len(result) == 0 {
+					return fmt.Errorf("result contains no logs")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "blockhash-filter",
+			About: "queries for filtered logs of a specific block hash",
+			Run: func(ctx context.Context, t *T) error {
+				emits := t.chain.txinfo.DynamicFeeEmit
+				info := emits[len(emits)-1]
+				hash := t.chain.GetBlock(int(info.Block)).Hash()
+				result, err := t.eth.FilterLogs(ctx, ethereum.FilterQuery{
+					BlockHash: &hash,
+					Topics:    [][]common.Hash{{*info.LogTopic0}, {*info.LogTopic1}},
+				})
+				if err != nil {
+					return err
+				}
+				if len(result) == 0 {
+					return fmt.Errorf("result contains no logs")
+				}
+				return nil
+			},
+		},
 	},
 }
 
