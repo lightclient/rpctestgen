@@ -90,6 +90,7 @@ var AllMethods = []MethodTests{
 	DebugGetRawReceipts,
 	DebugGetRawTransaction,
 	EthBlobBaseFee,
+	EthConfig,
 
 	// -- gas price tests are disabled because of non-determinism
 	// EthGasPrice,
@@ -1739,6 +1740,47 @@ var EthBlobBaseFee = MethodTests{
 			Run: func(ctx context.Context, t *T) error {
 				var result hexutil.Big
 				err := t.rpc.CallContext(ctx, &result, "eth_blobBaseFee")
+				return err
+			},
+		},
+	},
+}
+
+// EthConfig stores a list of all tests against the method.
+var EthConfig = MethodTests{
+	"eth_config",
+	[]Test{
+		{
+			Name:  "get-current-config",
+			About: "retrieves the client's current fork configuration when no future forks are scheduled",
+			Run: func(ctx context.Context, t *T) error {
+				var result map[string]interface{}
+				err := t.rpc.CallContext(ctx, &result, "eth_config")
+				if err != nil {
+					return err
+				}
+
+				// Validate that result has expected fields
+				if result["current"] == nil {
+					return fmt.Errorf("missing 'current' field in response")
+				}
+				if _, ok := result["next"]; !ok {
+					return fmt.Errorf("missing 'next' field in response")
+				}
+				if _, ok := result["last"]; !ok {
+					return fmt.Errorf("missing 'last' field in response")
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:     "get-config-with-next-fork",
+			About:    "retrieves the client's configuration when a future fork is scheduled",
+			SpecOnly: true,
+			Run: func(ctx context.Context, t *T) error {
+				var result map[string]interface{}
+				err := t.rpc.CallContext(ctx, &result, "eth_config")
 				return err
 			},
 		},
