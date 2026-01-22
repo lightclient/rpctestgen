@@ -89,6 +89,7 @@ var AllMethods = []MethodTests{
 	DebugGetRawBlock,
 	DebugGetRawReceipts,
 	DebugGetRawTransaction,
+	DebugTraceCall,
 	EthBlobBaseFee,
 	NetVersion,
 
@@ -2246,6 +2247,83 @@ var DebugGetRawTransaction = MethodTests{
 					return err
 				}
 				return nil
+			},
+		},
+	},
+}
+
+type debugTraceCallParams struct {
+	From       common.Address   `json:"from,omitempty"`
+	To         *common.Address  `json:"to,omitempty"`
+	Gas        hexutil.Uint64   `json:"gas,omitempty"`
+	GasPrice   hexutil.Big      `json:"gasPrice,omitempty"`
+	Value      hexutil.Big      `json:"value,omitempty"`
+	Data       hexutil.Bytes    `json:"data,omitempty"`
+	AccessList types.AccessList `json:"accessList,omitempty"`
+}
+
+var DebugTraceCall = MethodTests{
+	"debug_traceCall",
+	[]Test{
+		{
+			Name:  "traceCall-eip2930",
+			About: "trace tx-emit-eip2930 optional access list",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				to := tx.To()
+				from, _ := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
+
+				return t.rpc.CallContext(ctx, &result, "debug_traceCall", debugTraceCallParams{
+					From:       from,
+					To:         to,
+					Gas:        hexutil.Uint64(tx.Gas()),
+					GasPrice:   hexutil.Big(*tx.GasPrice()),
+					Value:      hexutil.Big(*tx.Value()),
+					Data:       tx.Data(),
+					AccessList: tx.AccessList(),
+				}, "0x18")
+			},
+		},
+		{
+			Name:  "traceCall-structLogs-gas",
+			About: "generic debug_traceCall for GAS (0x5a)",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				return t.rpc.CallContext(ctx, &result, "debug_traceCall", debugTraceCallParams{
+					From: common.Address{0x01},
+					Data: hexutil.MustDecode("0x5a"),
+					Gas:  hexutil.Uint64(0x35a4e900),
+				}, "0x2d")
+			},
+		},
+		{
+			Name:  "traceCall-contract-to-contract-delegatecall",
+			About: "trace a DELEGATECALL from proxy contract to target contract with default tracer (structLogs)",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+
+				// Set up state overrides:
+				// - 0xc100...: delegateCaller2 proxy (auto-delegates to 0xc200)
+				// - 0xc200...: getBlockProperties contract (returns block info)
+				// When 0xc100 is called, it DELEGATECALLs to 0xc200, creating a contract-to-contract interaction
+				stateOverrides := map[string]interface{}{
+					"0xc100000000000000000000000000000000000000": map[string]interface{}{
+						"code": delegateCaller2(),
+					},
+					"0xc200000000000000000000000000000000000000": map[string]interface{}{
+						"code": getBlockProperties(),
+					},
+				}
+
+				to := common.HexToAddress("0xc100000000000000000000000000000000000000")
+				return t.rpc.CallContext(ctx, &result, "debug_traceCall", debugTraceCallParams{
+					To:  &to,
+					Gas: hexutil.Uint64(100000),
+				}, "latest", map[string]interface{}{
+					"stateOverrides": stateOverrides,
+				})
 			},
 		},
 	},
