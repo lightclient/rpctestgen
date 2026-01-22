@@ -1,3 +1,7 @@
+# rpctestgen has moved
+
+This repository has moved to the `tools` directory in [execution-apis](https://github.com/ethereum/execution-apis/).
+
 # rpctestgen
 
 `rpctestgen` is a test fixture generator for the execution layer JSON-RPC API. 
