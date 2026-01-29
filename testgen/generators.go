@@ -5652,12 +5652,84 @@ var EthSimulateV1 = MethodTests{
 			},
 		},
 		{
+			Name:  "ethSimulate-override-BeaconRoot",
+			About: "override beacon block root and request from beacon roots contract",
+			Run: func(ctx context.Context, t *T) error {
+				beaconRoot := common.BytesToHash(*hex2Bytes("12345"))
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								BeaconRoot: &beaconRoot,
+							},
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									Code: getBeaconBlockRoot(),
+								},
+							},
+							Calls: []TransactionArgs{{
+								To:    &common.Address{0xc1},
+								Input: hex2Bytes("0x0"),
+							}},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "ethSimulate-override-withdrawals",
+			About: "override and spend withdrawal",
+			Run: func(ctx context.Context, t *T) error {
+				withdrawals := types.Withdrawals{
+					&types.Withdrawal{
+						Index:     1,
+						Validator: 2,
+						Address:   common.Address{0xc0},
+						Amount:    10,
+					},
+				}
+				params := ethSimulateOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Withdrawals: &withdrawals,
+							},
+						},
+						{
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: *newRPCBalance(10000000),
+							}},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "ethSimulate-use-as-many-features-as-possible",
 			About: "try using all eth simulates features at once",
 			Run: func(ctx context.Context, t *T) error {
 				latestBlockNumber := t.chain.Head().Number().Int64()
 				latestBlockTime := hexutil.Uint64(t.chain.Head().Time())
 				prevRandDao := common.BytesToHash(*hex2Bytes("12345"))
+				beaconRoot := common.BytesToHash(*hex2Bytes("6789"))
 				stateChanges := make(map[common.Hash]common.Hash)
 				stateChanges[common.BytesToHash(*hex2Bytes("0000000000000000000000000000000000000000000000000000000000000000"))] = common.Hash{0x12} //slot 0 -> 0x12
 				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
@@ -5671,6 +5743,7 @@ var EthSimulateV1 = MethodTests{
 								FeeRecipient:  &common.Address{0xc2},
 								PrevRandao:    &prevRandDao,
 								BaseFeePerGas: (*hexutil.Big)(big.NewInt(1007)),
+								BeaconRoot:    &beaconRoot,
 							},
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(900001000000)},
@@ -6109,13 +6182,15 @@ type TransactionArgs struct {
 
 // BlockOverrides is a set of header fields to override.
 type BlockOverrides struct {
-	Number        *hexutil.Big    `json:"number,omitempty"`
-	Time          *hexutil.Uint64 `json:"time,omitempty"`
-	GasLimit      *hexutil.Uint64 `json:"gasLimit,omitempty"`
-	FeeRecipient  *common.Address `json:"feeRecipient,omitempty"`
-	PrevRandao    *common.Hash    `json:"prevRandao,omitempty"`
-	BaseFeePerGas *hexutil.Big    `json:"baseFeePerGas,omitempty"`
-	BlobBaseFee   *hexutil.Big    `json:"blobBaseFee,omitempty"`
+	Number        *hexutil.Big       `json:"number,omitempty"`
+	Time          *hexutil.Uint64    `json:"time,omitempty"`
+	GasLimit      *hexutil.Uint64    `json:"gasLimit,omitempty"`
+	FeeRecipient  *common.Address    `json:"feeRecipient,omitempty"`
+	PrevRandao    *common.Hash       `json:"prevRandao,omitempty"`
+	BaseFeePerGas *hexutil.Big       `json:"baseFeePerGas,omitempty"`
+	BlobBaseFee   *hexutil.Big       `json:"blobBaseFee,omitempty"`
+	BeaconRoot    *common.Hash       `json:"beaconRoot,omitempty"`
+	Withdrawals   *types.Withdrawals `json:"withdrawals,omitempty"`
 }
 
 // OverrideAccount indicates the overriding fields of account during the execution
