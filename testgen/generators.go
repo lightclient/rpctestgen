@@ -931,6 +931,25 @@ in the "error" field.`,
 				return nil
 			},
 		},
+		{
+			Name:     "create-al-insufficient-funds",
+			About:    "Tries to create access list with transaction value bigger then sender balance",
+			SpecOnly: true,
+			Run: func(ctx context.Context, t *T) error {
+				msg := map[string]any{
+					"value": "0xfffffffffffffffffffffffffff",
+				}
+				var result struct {
+					AccessList types.AccessList
+					Error      string
+				}
+				err := t.rpc.CallContext(ctx, &result, "eth_createAccessList", msg, "latest")
+				if err == nil {
+					return fmt.Errorf("expected insufficient funds error")
+				}
+				return nil
+			},
+		},
 	},
 }
 
@@ -2087,6 +2106,34 @@ var EthGetLogs = MethodTests{
 			},
 		},
 		{
+			Name:  "filter-error-reversed-block-range-with-tags",
+			About: "checks that an error is returned if toBlock is `earliest` and fromBlock is `latest`",
+			Run: func(ctx context.Context, t *T) error {
+				err := t.rpc.CallContext(ctx, nil, "eth_getLogs", map[string]string{
+					"fromBlock": "latest",
+					"toBlock":   "earliest",
+				})
+				if err == nil {
+					return fmt.Errorf("expected error")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "filter-error-pending-block-unsupported",
+			About: "checks that an error is returned if pending block is requested",
+			Run: func(ctx context.Context, t *T) error {
+				err := t.rpc.CallContext(ctx, nil, "eth_getLogs", map[string]string{
+					"fromBlock": "earliest",
+					"toBlock":   "pending",
+				})
+				if err == nil {
+					return fmt.Errorf("expected error")
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "filter-error-blockHash-and-range",
 			About: "checks that an error is returned if `fromBlock`/`toBlock` are specified together with `blockHash`",
 			Run: func(ctx context.Context, t *T) error {
@@ -2094,6 +2141,19 @@ var EthGetLogs = MethodTests{
 					"blockHash": t.chain.blocks[10].Hash().String(),
 					"fromBlock": "0x3",
 					"toBlock":   "0x4",
+				})
+				if err == nil {
+					return fmt.Errorf("expected error")
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "filter-error-unknown-block",
+			About: "checks that an error is returned if `blockHash` is unknown",
+			Run: func(ctx context.Context, t *T) error {
+				err := t.rpc.CallContext(ctx, nil, "eth_getLogs", map[string]string{
+					"blockHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
 				})
 				if err == nil {
 					return fmt.Errorf("expected error")
